@@ -43,7 +43,7 @@ export default function About() {
               </p>
             </div>
             <div className="mt-8 pt-6 border-t border-[#ff69b4] border-opacity-30">
-              <div className="font-mono text-xs text-pink-300">PENULTIMATE COMMIT</div>
+              <div className="font-mono text-xs text-pink-300">LATEST COMMIT</div>
               <a
                 href={`https://codeberg.org/0xe37/kzyno/${NEXT_PUBLIC_COMMIT_HASH ? 'commit/' + NEXT_PUBLIC_COMMIT_HASH : ''}`}
                 target="_blank"
