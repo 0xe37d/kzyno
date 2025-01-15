@@ -18,12 +18,12 @@ export default function About() {
       
       <div className="max-w-6xl mx-auto">
         <h1 className={`text-4xl md:text-6xl text-white font-bold mb-8 ${daydream.className}`}>
-          About Kasino
+          About kzyno
         </h1>
         
         <div className="grid md:grid-cols-2 gap-8 items-start">
           <section className="bg-[#2a0a1f] p-6 rounded-2xl border-2 border-[#ff69b4] shadow-[0_0_30px_rgba(255,20,147,0.3)] md:sticky md:top-8">
-            <h2 className={`text-2xl text-white mb-4 ${daydream.className}`}>What is Kasino?</h2>
+            <h2 className={`text-2xl text-white mb-4 ${daydream.className}`}>What is kzyno?</h2>
             <div className="space-y-4">
               <p className="text-pink-100 leading-relaxed">
                 this is a decentralized casino. it's not owned by a company, a person, or any central entity. it's just code—open, transparent, and running on the blockchain. anyone can interact with it, from anywhere, without permission. no gatekeepers, no middlemen. just the game, as it should be.
@@ -45,7 +45,7 @@ export default function About() {
 
           <div className="space-y-8">
             <section className="bg-[#2a0a1f] p-6 rounded-2xl border-2 border-[#ff69b4] shadow-[0_0_30px_rgba(255,20,147,0.3)]">
-              <h2 className={`text-2xl text-white mb-4 ${daydream.className}`}>Why Choose Kasino?</h2>
+              <h2 className={`text-2xl text-white mb-4 ${daydream.className}`}>Why Choose kzyno?</h2>
               <ul className="text-pink-100 space-y-3">
                 <li className="flex items-start">
                   <span className="text-[#ff69b4] mr-2">•</span>
@@ -71,7 +71,7 @@ export default function About() {
               <ul className="text-pink-100 space-y-3">
                 <li className="flex items-start">
                   <span className="text-[#ff69b4] mr-2">•</span>
-                  <span>$KASINO token for governance and rewards</span>
+                  <span>$KZYNO token for governance and rewards</span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-[#ff69b4] mr-2">•</span>

@@ -4,7 +4,7 @@ import './globals.css'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'kasino',
+  title: 'kzyno',
   description: 'The future of decentralized casino gaming',
 }
 

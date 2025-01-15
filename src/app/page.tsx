@@ -9,11 +9,10 @@ export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const letters = [
     { char: 'K', index: 1 },
-    { char: 'A', index: 2 },
-    { char: 'S', index: 3 },
-    { char: 'I', index: 4 },
-    { char: 'N', index: 5 },
-    { char: 'O', index: 6 },
+    { char: 'Z', index: 2 },
+    { char: 'Y', index: 3 },
+    { char: 'N', index: 4 },
+    { char: 'O', index: 5 },
   ];
 
   return (

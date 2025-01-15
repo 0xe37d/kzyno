@@ -35,7 +35,7 @@ async function sendToDiscord(data: {
 
   const message = {
     embeds: [{
-      title: '🎰 New Kasino Airdrop Signup',
+      title: '🎰 New Kzyno Airdrop Signup',
       color: 0xff69b4, // Pink
       fields: [
         { name: 'Email', value: data.email },
