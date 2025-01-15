@@ -3,6 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { daydream } from '../fonts'
+import { NEXT_PUBLIC_COMMIT_HASH } from '../commit-hash'
 
 export default function About() {
   return (
@@ -40,6 +41,20 @@ export default function About() {
               <p className="text-pink-100 leading-relaxed">
                 this isn't just a casino. it's a different way of doing things. one where freedom isn't an abstract idea—it's how the system operates. 
               </p>
+            </div>
+            <div className="mt-8 pt-6 border-t border-[#ff69b4] border-opacity-30">
+              <div className="font-mono text-xs text-pink-300">PENULTIMATE COMMIT</div>
+              <a
+                href={`https://codeberg.org/0xe37/kzyno/${NEXT_PUBLIC_COMMIT_HASH ? 'commit/' + NEXT_PUBLIC_COMMIT_HASH : ''}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-mono text-sm hover:text-[#ff69b4] transition-colors flex items-center gap-2 group"
+              >
+                <span className="text-pink-200 group-hover:text-[#ff69b4]">$</span>
+                <span className="text-pink-100">git rev-parse HEAD</span>
+                <span className="text-[#ff69b4]">=</span>
+                <span className="text-white">{NEXT_PUBLIC_COMMIT_HASH ? NEXT_PUBLIC_COMMIT_HASH : 'main'}</span>
+              </a>
             </div>
           </section>
 
@@ -121,17 +136,6 @@ export default function About() {
           >
             Join the Revolution
           </Link>
-        </div>
-
-        <div className="mt-8 text-center text-sm text-pink-200 opacity-75">
-          <a
-            href={`https://codeberg.org/0xe37/kzyno/${process.env.NEXT_PUBLIC_COMMIT_HASH ? 'commit/' + process.env.NEXT_PUBLIC_COMMIT_HASH : ''}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-white transition-colors"
-          >
-            {process.env.NEXT_PUBLIC_COMMIT_HASH ? `#${process.env.NEXT_PUBLIC_COMMIT_HASH.slice(0, 7)}` : 'main'}
-          </a>
         </div>
       </div>
     </main>
