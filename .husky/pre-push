@@ -1,9 +1,12 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
 # Get the current (latest) commit hash
 COMMIT_HASH=$(git rev-parse HEAD)
 
 # Update the commit hash in a public file
 echo "export const NEXT_PUBLIC_COMMIT_HASH: string = '$COMMIT_HASH';" > src/app/commit-hash.ts
 
-# Stage and create a fixup commit for the hash update
+# Stage and commit the hash update
 git add src/app/commit-hash.ts
-git commit --amend --no-edit 
+git commit -m "chore: update commit hash" || true 
