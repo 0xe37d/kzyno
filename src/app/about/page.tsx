@@ -1,0 +1,128 @@
+'use client'
+
+import React from 'react'
+import Link from 'next/link'
+import { daydream } from '../fonts'
+
+export default function About() {
+  return (
+    <main className="min-h-screen bg-[#ff1e7a] p-6 md:p-12">
+      <nav className="max-w-6xl mx-auto mb-12">
+        <Link 
+          href="/" 
+          className={`text-white hover:text-pink-200 transition-colors ${daydream.className}`}
+        >
+          Back to Home
+        </Link>
+      </nav>
+      
+      <div className="max-w-6xl mx-auto">
+        <h1 className={`text-4xl md:text-6xl text-white font-bold mb-8 ${daydream.className}`}>
+          About Kasino
+        </h1>
+        
+        <div className="grid md:grid-cols-2 gap-8 items-start">
+          <section className="bg-[#2a0a1f] p-6 rounded-2xl border-2 border-[#ff69b4] shadow-[0_0_30px_rgba(255,20,147,0.3)] md:sticky md:top-8">
+            <h2 className={`text-2xl text-white mb-4 ${daydream.className}`}>What is Kasino?</h2>
+            <div className="space-y-4">
+              <p className="text-pink-100 leading-relaxed">
+                this is a decentralized casino. it's not owned by a company, a person, or any central entity. it's just code—open, transparent, and running on the blockchain. anyone can interact with it, from anywhere, without permission. no gatekeepers, no middlemen. just the game, as it should be.
+              </p>
+              <p className="text-pink-100 leading-relaxed">
+                but it's more than that. when you play here, you're not just a player. you can own a piece of the casino itself. through tokens, you become a stakeholder. and as a stakeholder, you share in the profits. all of them. the contract is designed to return everything to the token holders. no cuts, no skimming, no hidden fees. just a direct flow of value back to the people who are part of it.
+              </p>
+              <p className="text-pink-100 leading-relaxed">
+                this flips the script. traditionally, the house always wins, and players are left with nothing. here, the players are the house. the line between the two disappears. it's a fairer system, one where the incentives align with the community, not some distant corporation.
+              </p>
+              <p className="text-pink-100 leading-relaxed">
+                it's not about reinventing gambling. it's about rethinking who benefits from it. this is a casino where transparency and ownership are built into the foundation. where the rules are clear, the code is open, and the value flows back to the people who make it work.
+              </p>
+              <p className="text-pink-100 leading-relaxed">
+                this isn't just a casino. it's a different way of doing things. one where freedom isn't an abstract idea—it's how the system operates. 
+              </p>
+            </div>
+          </section>
+
+          <div className="space-y-8">
+            <section className="bg-[#2a0a1f] p-6 rounded-2xl border-2 border-[#ff69b4] shadow-[0_0_30px_rgba(255,20,147,0.3)]">
+              <h2 className={`text-2xl text-white mb-4 ${daydream.className}`}>Why Choose Kasino?</h2>
+              <ul className="text-pink-100 space-y-3">
+                <li className="flex items-start">
+                  <span className="text-[#ff69b4] mr-2">•</span>
+                  <span>Provably fair gaming mechanics</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-[#ff69b4] mr-2">•</span>
+                  <span>Instant deposits and withdrawals</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-[#ff69b4] mr-2">•</span>
+                  <span>No account registration required</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-[#ff69b4] mr-2">•</span>
+                  <span>Community-driven governance</span>
+                </li>
+              </ul>
+            </section>
+
+            <section className="bg-[#2a0a1f] p-6 rounded-2xl border-2 border-[#ff69b4] shadow-[0_0_30px_rgba(255,20,147,0.3)]">
+              <h2 className={`text-2xl text-white mb-4 ${daydream.className}`}>Tokenomics</h2>
+              <ul className="text-pink-100 space-y-3">
+                <li className="flex items-start">
+                  <span className="text-[#ff69b4] mr-2">•</span>
+                  <span>$KASINO token for governance and rewards</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-[#ff69b4] mr-2">•</span>
+                  <span>100% of profits distributed to token holders</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-[#ff69b4] mr-2">•</span>
+                  <span>Play-to-earn mechanics</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-[#ff69b4] mr-2">•</span>
+                  <span>Deflationary token model</span>
+                </li>
+              </ul>
+            </section>
+
+            <section className="bg-[#2a0a1f] p-6 rounded-2xl border-2 border-[#ff69b4] shadow-[0_0_30px_rgba(255,20,147,0.3)]">
+              <h2 className={`text-2xl text-white mb-4 ${daydream.className}`}>Roadmap</h2>
+              <div className="space-y-4 text-pink-100">
+                <div>
+                  <h3 className={`text-[#ff69b4] ${daydream.className}`}>Q1 2025</h3>
+                  <p>Platform development and smart contract audits</p>
+                </div>
+                <div>
+                  <h3 className={`text-[#ff69b4] ${daydream.className}`}>Q2 2025</h3>
+                  <p>Token launch and initial game releases</p>
+                </div>
+                <div>
+                  <h3 className={`text-[#ff69b4] ${daydream.className}`}>Q3 2025</h3>
+                  <p>Expanded game selection</p>
+                </div>
+                <div>
+                  <h3 className={`text-[#ff69b4] ${daydream.className}`}>Q4 2025</h3>
+                  <p>DAO governance implementation</p>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div className="mt-12 text-center">
+          <Link
+            href="/"
+            className={`inline-block px-8 py-4 bg-[#2a0a1f] text-white rounded-2xl border-2 border-[#ff69b4] 
+                     hover:bg-[#ff69b4] transition-colors shadow-[0_0_15px_rgba(255,20,147,0.3)]
+                     ${daydream.className}`}
+          >
+            Join the Revolution
+          </Link>
+        </div>
+      </div>
+    </main>
+  )
+} 
