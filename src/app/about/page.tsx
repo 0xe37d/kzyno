@@ -122,6 +122,17 @@ export default function About() {
             Join the Revolution
           </Link>
         </div>
+
+        <div className="mt-8 text-center text-sm text-pink-200 opacity-75">
+          <a
+            href={`https://codeberg.org/0xe37/kzyno/${process.env.NEXT_PUBLIC_COMMIT_HASH ? 'commit/' + process.env.NEXT_PUBLIC_COMMIT_HASH : ''}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-white transition-colors"
+          >
+            {process.env.NEXT_PUBLIC_COMMIT_HASH ? `#${process.env.NEXT_PUBLIC_COMMIT_HASH.slice(0, 7)}` : 'main'}
+          </a>
+        </div>
       </div>
     </main>
   )
