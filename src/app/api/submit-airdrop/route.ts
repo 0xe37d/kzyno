@@ -3,6 +3,8 @@ import { headers } from 'next/headers';
 import { ethers } from 'ethers';
 import { rateLimit } from '../../../lib/rate-limit';
 
+export const runtime = 'edge';
+
 // Validation functions
 function isValidEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -19,6 +21,115 @@ function isValidWalletAddress(address: string): boolean {
 
 function sanitizeInput(input: string): string {
   return input.trim().toLowerCase();
+}
+
+export async function POST(req: Request) {
+  try {
+    // Rate limiting
+    const headersList = await headers();
+    const ip = headersList.get('x-forwarded-for') || 'unknown';
+    const { success } = await rateLimit(ip);
+    
+    if (!success) {
+      return new NextResponse(
+        JSON.stringify({ error: 'Too many requests. Please try again later.' }),
+        { 
+          status: 429,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          }
+        }
+      );
+    }
+
+    const body = await req.json();
+    const { email, walletAddress, twitter, discord } = body;
+
+    // Input validation
+    if (!email || !walletAddress) {
+      return new NextResponse(
+        JSON.stringify({ error: 'Email and wallet address are required' }),
+        { 
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          }
+        }
+      );
+    }
+
+    // Sanitize inputs
+    const sanitizedEmail = sanitizeInput(email);
+    const sanitizedWallet = sanitizeInput(walletAddress);
+    const sanitizedTwitter = twitter ? sanitizeInput(twitter) : '';
+    const sanitizedDiscord = discord ? sanitizeInput(discord) : '';
+
+    // Validate email format
+    if (!isValidEmail(sanitizedEmail)) {
+      return new NextResponse(
+        JSON.stringify({ error: 'Invalid email format' }),
+        { 
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          }
+        }
+      );
+    }
+
+    // Validate wallet address
+    if (!isValidWalletAddress(sanitizedWallet)) {
+      return new NextResponse(
+        JSON.stringify({ error: 'Invalid wallet address' }),
+        { 
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          }
+        }
+      );
+    }
+
+    // Send to Discord
+    await sendToDiscord({
+      email: sanitizedEmail,
+      wallet: sanitizedWallet,
+      twitter: sanitizedTwitter,
+      discord: sanitizedDiscord,
+      ip
+    });
+
+    return new NextResponse(
+      JSON.stringify({ success: true }),
+      { 
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        }
+      }
+    );
+  } catch (error) {
+    console.error('Airdrop submission error:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString(),
+    });
+
+    return new NextResponse(
+      JSON.stringify({ error: 'Failed to submit entry. Please try again later.' }),
+      { 
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        }
+      }
+    );
+  }
 }
 
 async function sendToDiscord(data: {
@@ -56,84 +167,5 @@ async function sendToDiscord(data: {
 
   if (!response.ok) {
     throw new Error('Failed to send Discord notification');
-  }
-}
-
-export async function POST(req: Request) {
-  try {
-    // Rate limiting
-    const headersList = await headers();
-    const ip = headersList.get('x-forwarded-for') || 'unknown';
-    const { success } = await rateLimit(ip);
-    
-    if (!success) {
-      return NextResponse.json(
-        { error: 'Too many requests. Please try again later.' },
-        { status: 429 }
-      );
-    }
-
-    const body = await req.json();
-    const { email, walletAddress, twitter, discord } = body;
-
-    // Input validation
-    if (!email || !walletAddress) {
-      return NextResponse.json(
-        { error: 'Email and wallet address are required' },
-        { status: 400 }
-      );
-    }
-
-    // Sanitize inputs
-    const sanitizedEmail = sanitizeInput(email);
-    const sanitizedWallet = sanitizeInput(walletAddress);
-    const sanitizedTwitter = twitter ? sanitizeInput(twitter) : '';
-    const sanitizedDiscord = discord ? sanitizeInput(discord) : '';
-
-    // Validate email format
-    if (!isValidEmail(sanitizedEmail)) {
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
-      );
-    }
-
-    // Validate wallet address
-    if (!isValidWalletAddress(sanitizedWallet)) {
-      return NextResponse.json(
-        { error: 'Invalid wallet address' },
-        { status: 400 }
-      );
-    }
-
-    // Send to Discord
-    await sendToDiscord({
-      email: sanitizedEmail,
-      wallet: sanitizedWallet,
-      twitter: sanitizedTwitter,
-      discord: sanitizedDiscord,
-      ip
-    });
-
-    // Log successful submission
-    console.log('Successful airdrop signup:', {
-      email: sanitizedEmail,
-      wallet: sanitizedWallet,
-      ip,
-      timestamp: new Date().toISOString(),
-    });
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    // Log error with context
-    console.error('Airdrop submission error:', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString(),
-    });
-
-    return NextResponse.json(
-      { error: 'Failed to submit entry. Please try again later.' },
-      { status: 500 }
-    );
   }
 } 
