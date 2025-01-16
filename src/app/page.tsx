@@ -17,10 +17,10 @@ export default function Home() {
 
   return (
     <main className={`min-h-screen flex flex-col items-center justify-center p-4 ${daydream.className}`}>
-      <nav className="fixed top-0 right-0 p-6">
+      <nav className="fixed top-0 right-0 p-4 md:p-6">
         <Link 
           href="/about" 
-          className="text-white hover:text-pink-200 transition-colors"
+          className="text-lg md:text-xl text-white hover:text-pink-200 transition-colors"
         >
           About
         </Link>
@@ -30,7 +30,7 @@ export default function Home() {
         <div className="slot-window">
           {letters.map(({ char, index }) => (
             <div key={index} className="slot-reel">
-              <div className={`slot-letter slot-letter-${index} text-6xl md:text-8xl`}>
+              <div className={`slot-letter slot-letter-${index} text-4xl md:text-8xl`}>
                 {char}
               </div>
             </div>
@@ -39,13 +39,13 @@ export default function Home() {
         <div className="slot-handle"></div>
       </div>
 
-      <p className="mt-8 text-white text-base md:text-lg text-center">
+      <p className="mt-6 md:mt-8 text-white text-sm md:text-lg text-center max-w-xs md:max-w-none">
         The Future of Decentralized Gaming
       </p>
       <button 
         onClick={() => setIsModalOpen(true)}
-        className="mt-12 px-8 py-4 bg-[#ff69b4] hover:bg-[#ff1493] 
-                   transition-colors rounded-2xl text-white text-sm
+        className="mt-8 md:mt-12 px-6 md:px-8 py-3 md:py-4 bg-[#ff69b4] hover:bg-[#ff1493] 
+                   transition-colors rounded-xl md:rounded-2xl text-white text-sm md:text-base
                    border-2 border-black shadow-[0_0_15px_rgba(255,20,147,0.5)]"
       >
         Sign Up for Airdrop

@@ -7,23 +7,23 @@ import { NEXT_PUBLIC_COMMIT_HASH } from '../commit-hash'
 
 export default function About() {
   return (
-    <main className="min-h-screen bg-[#ff1e7a] p-6 md:p-12">
-      <nav className="max-w-6xl mx-auto mb-12">
-        <Link 
-          href="/" 
-          className={`text-white hover:text-pink-200 transition-colors ${daydream.className}`}
-        >
-          Back to Home
-        </Link>
-      </nav>
-      
-      <div className="max-w-6xl mx-auto">
-        <h1 className={`text-4xl md:text-6xl text-white font-bold mb-8 ${daydream.className}`}>
+    <main className="min-h-screen bg-[#ff1e7a] md:p-12">
+      <div className="w-full md:max-w-6xl mx-auto px-2 md:px-0">
+        <nav className="mb-6 md:mb-12">
+          <Link 
+            href="/" 
+            className={`text-white hover:text-pink-200 transition-colors ${daydream.className}`}
+          >
+            Back to Home
+          </Link>
+        </nav>
+        
+        <h1 className={`text-3xl md:text-6xl text-white font-bold mb-6 md:mb-8 ${daydream.className}`}>
           About kzyno
         </h1>
         
-        <div className="grid md:grid-cols-2 gap-8 items-start">
-          <section className="bg-[#2a0a1f] p-6 rounded-2xl border-2 border-[#ff69b4] shadow-[0_0_30px_rgba(255,20,147,0.3)] md:sticky md:top-8">
+        <div className="grid md:grid-cols-2 gap-3 md:gap-8 items-start">
+          <section className="max-w-sm mx-auto md:max-w-none w-full bg-[#2a0a1f] p-3 md:p-6 rounded-xl md:rounded-2xl border-2 border-[#ff69b4] shadow-[0_0_30px_rgba(255,20,147,0.3)] md:sticky md:top-8">
             <h2 className={`text-2xl text-white mb-4 ${daydream.className}`}>What is kzyno?</h2>
             <div className="space-y-4">
               <p className="text-pink-100 leading-relaxed">
@@ -53,14 +53,21 @@ export default function About() {
                 <span className="text-pink-200 group-hover:text-[#ff69b4]">$</span>
                 <span className="text-pink-100">git rev-parse HEAD</span>
                 <span className="text-[#ff69b4]">=</span>
-                <span className="text-white">{NEXT_PUBLIC_COMMIT_HASH ? NEXT_PUBLIC_COMMIT_HASH : 'main'}</span>
+                <span className="text-white">
+                  {NEXT_PUBLIC_COMMIT_HASH ? (
+                    <>
+                      <span className="md:hidden">{NEXT_PUBLIC_COMMIT_HASH.slice(0, 7)}</span>
+                      <span className="hidden md:inline">{NEXT_PUBLIC_COMMIT_HASH}</span>
+                    </>
+                  ) : 'main'}
+                </span>
               </a>
             </div>
           </section>
 
-          <div className="space-y-8">
-            <section className="bg-[#2a0a1f] p-6 rounded-2xl border-2 border-[#ff69b4] shadow-[0_0_30px_rgba(255,20,147,0.3)]">
-              <h2 className={`text-2xl text-white mb-4 ${daydream.className}`}>Why Choose kzyno?</h2>
+          <div className="w-full space-y-3 md:space-y-8">
+            <section className="max-w-sm mx-auto md:max-w-none bg-[#2a0a1f] p-3 md:p-6 rounded-xl md:rounded-2xl border-2 border-[#ff69b4] shadow-[0_0_30px_rgba(255,20,147,0.3)]">
+              <h2 className={`text-xl md:text-2xl text-white mb-3 md:mb-4 ${daydream.className}`}>Why Choose kzyno?</h2>
               <ul className="text-pink-100 space-y-3">
                 <li className="flex items-start">
                   <span className="text-[#ff69b4] mr-2">•</span>
@@ -81,8 +88,8 @@ export default function About() {
               </ul>
             </section>
 
-            <section className="bg-[#2a0a1f] p-6 rounded-2xl border-2 border-[#ff69b4] shadow-[0_0_30px_rgba(255,20,147,0.3)]">
-              <h2 className={`text-2xl text-white mb-4 ${daydream.className}`}>Tokenomics</h2>
+            <section className="max-w-sm mx-auto md:max-w-none bg-[#2a0a1f] p-3 md:p-6 rounded-xl md:rounded-2xl border-2 border-[#ff69b4] shadow-[0_0_30px_rgba(255,20,147,0.3)]">
+              <h2 className={`text-xl md:text-2xl text-white mb-3 md:mb-4 ${daydream.className}`}>Tokenomics</h2>
               <ul className="text-pink-100 space-y-3">
                 <li className="flex items-start">
                   <span className="text-[#ff69b4] mr-2">•</span>
@@ -103,8 +110,8 @@ export default function About() {
               </ul>
             </section>
 
-            <section className="bg-[#2a0a1f] p-6 rounded-2xl border-2 border-[#ff69b4] shadow-[0_0_30px_rgba(255,20,147,0.3)]">
-              <h2 className={`text-2xl text-white mb-4 ${daydream.className}`}>Roadmap</h2>
+            <section className="max-w-sm mx-auto md:max-w-none bg-[#2a0a1f] p-3 md:p-6 rounded-xl md:rounded-2xl border-2 border-[#ff69b4] shadow-[0_0_30px_rgba(255,20,147,0.3)]">
+              <h2 className={`text-xl md:text-2xl text-white mb-3 md:mb-4 ${daydream.className}`}>Roadmap</h2>
               <div className="space-y-4 text-pink-100">
                 <div>
                   <h3 className={`text-[#ff69b4] ${daydream.className}`}>Q1 2025</h3>
