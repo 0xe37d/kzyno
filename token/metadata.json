@@ -2,5 +2,5 @@
   "name": "Kzyno Token",
   "symbol": "KZYNO",
   "description": "A token that is used to represent shares in the Kzyno smart contract.",
-  "image": "https://raw.githubusercontent.com/0xe37d/kzyno/refs/heads/main/kz.png"
+  "image": "https://raw.githubusercontent.com/0xe37d/kzyno/refs/heads/main/token/kz.png"
 }
