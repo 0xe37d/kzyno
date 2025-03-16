@@ -9,10 +9,20 @@
 }
 
 body {
-  background: var(--background-pink);
+  background: linear-gradient(135deg, #ff1e7a 0%, #ff4d94 50%, #ff1e7a 100%);
+  background-attachment: fixed;
+  position: relative;
   color: white;
   min-height: 100vh;
   overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 0%, transparent 50%);
+  pointer-events: none;
 }
 
 .slot-machine {

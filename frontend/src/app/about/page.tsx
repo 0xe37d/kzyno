@@ -7,7 +7,7 @@ import { NEXT_PUBLIC_COMMIT_HASH } from '../commit-hash'
 
 export default function About() {
   return (
-    <main className="min-h-screen bg-[#ff1e7a] md:p-12">
+    <main className="h-screen overflow-y-auto bg-[#ff1e7a] md:p-12">
       <div className="w-full md:max-w-6xl mx-auto px-2 md:px-0">
         <nav className="mb-6 md:mb-12">
           <Link 

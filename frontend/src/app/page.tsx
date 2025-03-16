@@ -18,12 +18,20 @@ export default function Home() {
   return (
     <main className={`min-h-screen flex flex-col items-center justify-center p-4 ${daydream.className}`}>
       <nav className="fixed top-0 right-0 p-4 md:p-6">
-        <Link 
-          href="/about" 
-          className="text-lg md:text-xl text-white hover:text-pink-200 transition-colors"
-        >
-          About
-        </Link>
+        <div className="flex gap-4">
+          <Link 
+            href="/about" 
+            className="text-lg md:text-xl text-white hover:text-pink-200 transition-colors"
+          >
+            About
+          </Link>
+          <Link 
+            href="/game" 
+            className="text-lg md:text-xl text-white hover:text-pink-200 transition-colors"
+          >
+            Game
+          </Link>
+        </div>
       </nav>
 
       <div className="slot-machine">
