@@ -8,7 +8,6 @@ import confetti from 'canvas-confetti'
 
 export default function Game() {
   const [isSpinning, setIsSpinning] = useState(false)
-  const [currentNumber, setCurrentNumber] = useState('00')
   const [balance, setBalance] = useState(1000)  // Starting balance of $1000
   const [betUnit, setBetUnit] = useState(1)  // Default bet unit
   const [bets, setBets] = useState<{ [key: string]: number }>({})  // Map of number to bet amount
@@ -85,7 +84,6 @@ export default function Game() {
         if (wheelRef.current) {
           wheelRef.current.style.transition = 'none'
           wheelRef.current.style.transform = `rotate(${targetDegrees}deg)`
-          setCurrentNumber(targetNumber)
           
           // Calculate winnings
           let winnings = 0
@@ -186,11 +184,6 @@ export default function Game() {
               <div className="w-full max-w-[min(100vw,600px)] aspect-square relative flex items-center justify-center cursor-pointer" onClick={handleSpin}>
                 {/* Winner indicator triangle */}
                 <div className="absolute top-[8%] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[15px] border-l-transparent border-r-[15px] border-r-transparent border-t-[30px] border-t-black z-10 filter drop-shadow-[0_0_8px_rgba(0,0,0,0.9)]" />
-                
-                {/* Current Number Display */}
-                <div className={`absolute top-[15%] left-1/2 -translate-x-1/2 text-2xl ${daydream.className} text-white z-20`}>
-                  {currentNumber}
-                </div>
 
                 {/* Winning Amount Animation */}
                 {showWinnings && winAmount > 0 && (
