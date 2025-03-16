@@ -104,7 +104,7 @@ export default function Game() {
               return Math.random() * (max - min) + min
             }
             
-            const interval: any = setInterval(function() {
+            const interval = setInterval(function() {
               const timeLeft = duration - (Date.now() - startTime)
               
               if (timeLeft <= 0) {
@@ -122,7 +122,7 @@ export default function Game() {
                 particleCount,
                 origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
               }))
-            }, 250)
+            }, 250) as NodeJS.Timeout
 
             setTimeout(() => {
               setShowWinnings(false)
@@ -187,6 +187,11 @@ export default function Game() {
                 {/* Winner indicator triangle */}
                 <div className="absolute top-[8%] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[15px] border-l-transparent border-r-[15px] border-r-transparent border-t-[30px] border-t-black z-10 filter drop-shadow-[0_0_8px_rgba(0,0,0,0.9)]" />
                 
+                {/* Current Number Display */}
+                <div className={`absolute top-[15%] left-1/2 -translate-x-1/2 text-2xl ${daydream.className} text-white z-20`}>
+                  {currentNumber}
+                </div>
+
                 {/* Winning Amount Animation */}
                 {showWinnings && winAmount > 0 && (
                   <div 
