@@ -203,7 +203,7 @@ export default function Game() {
                         className="animate-win-bounce"
                         style={{
                           color: '#4ade80',
-                          fontSize: '8rem',
+                          fontSize: 'clamp(3rem, 10vw, 8rem)',
                           fontWeight: 'bold',
                           textShadow: '0 0 30px rgba(74, 222, 128, 0.7)',
                           WebkitTextStroke: '3px rgba(0, 0, 0, 0.5)',
@@ -233,21 +233,17 @@ export default function Game() {
               </div>
 
               {/* Board Section */}
-              <div className="w-full max-w-[min(100vw,800px)] aspect-[2341/1131] relative">
-                <Image
-                  src="/game/board.svg"
-                  alt="Roulette Board"
-                  fill
-                  priority
-                  className="object-contain"
-                />
+              <div 
+                className="w-full max-w-[min(100vw,800px)] aspect-[2341/1131] relative bg-no-repeat bg-contain bg-center"
+                style={{ backgroundImage: 'url("/game/board.svg")' }}
+              >
                 {/* Clickable overlay */}
-                <div className="absolute inset-y-[10%] left-[1%] right-[8%] grid grid-cols-8 gap-x-0.5 px-4">
+                <div className="absolute inset-0 grid grid-cols-8 gap-x-0.5 mr-[10%] ml-[3%] my-[4%]">
                   {/* Main number grid - 7 columns of numbers */}
                   <div className="col-span-7 grid grid-cols-7 gap-x-0.5">
                     {/* Column 1 */}
-                    <div className="grid grid-rows-3 gap-y-4">
-                      <div data-number="1" className="cursor-pointer hover:bg-white/10 transition-colors mx-1 h-24 relative" onClick={() => handleNumberClick('1')}>
+                    <div className="grid grid-rows-3 gap-y-0.5">
+                      <div data-number="1" className="cursor-pointer hover:bg-white/10 transition-colors relative h-full" onClick={() => handleNumberClick('1')}>
                         {bets['1'] && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             {getChipCombination(bets['1']).map((chipValue: number, index: number) => (
@@ -255,23 +251,23 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -12}px)`,
+                                  transform: `translateY(${index * -2}px)`,
                                   zIndex: index + 10
                                 }}
                               >
                                 <Image
                                   src={`/game/${chipValue === 1 ? 'dollar' : chipValue === 5 ? 'five_dollar' : 'ten_dollar'}_chip.svg`}
                                   alt={`$${chipValue} chip`}
-                                  width={64}
-                                  height={64}
-                                  className="w-16 h-16"
+                                  width={12}
+                                  height={12}
+                                  className="w-12 h-12 md:w-16 md:h-16"
                                 />
                               </div>
                             ))}
                           </div>
                         )}
                       </div>
-                      <div data-number="10" className="cursor-pointer hover:bg-white/10 transition-colors mx-1 h-24 relative" onClick={() => handleNumberClick('10')}>
+                      <div data-number="10" className="cursor-pointer hover:bg-white/10 transition-colors relative h-full" onClick={() => handleNumberClick('10')}>
                         {bets['10'] && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             {getChipCombination(bets['10']).map((chipValue: number, index: number) => (
@@ -279,23 +275,23 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -12}px)`,
+                                  transform: `translateY(${index * -2}px)`,
                                   zIndex: index + 10
                                 }}
                               >
                                 <Image
                                   src={`/game/${chipValue === 1 ? 'dollar' : chipValue === 5 ? 'five_dollar' : 'ten_dollar'}_chip.svg`}
                                   alt={`$${chipValue} chip`}
-                                  width={64}
-                                  height={64}
-                                  className="w-16 h-16"
+                                  width={12}
+                                  height={12}
+                                  className="w-12 h-12 md:w-16 md:h-16"
                                 />
                               </div>
                             ))}
                           </div>
                         )}
                       </div>
-                      <div data-number="16" className="cursor-pointer hover:bg-white/10 transition-colors mx-1 h-24 relative" onClick={() => handleNumberClick('16')}>
+                      <div data-number="16" className="cursor-pointer hover:bg-white/10 transition-colors relative h-full" onClick={() => handleNumberClick('16')}>
                         {bets['16'] && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             {getChipCombination(bets['16']).map((chipValue: number, index: number) => (
@@ -303,16 +299,16 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -12}px)`,
+                                  transform: `translateY(${index * -2}px)`,
                                   zIndex: index + 10
                                 }}
                               >
                                 <Image
                                   src={`/game/${chipValue === 1 ? 'dollar' : chipValue === 5 ? 'five_dollar' : 'ten_dollar'}_chip.svg`}
                                   alt={`$${chipValue} chip`}
-                                  width={64}
-                                  height={64}
-                                  className="w-16 h-16"
+                                  width={12}
+                                  height={12}
+                                  className="w-12 h-12 md:w-16 md:h-16"
                                 />
                               </div>
                             ))}
@@ -321,8 +317,8 @@ export default function Game() {
                       </div>
                     </div>
                     {/* Column 2 */}
-                    <div className="grid grid-rows-3 gap-y-4">
-                      <div data-number="7" className="cursor-pointer hover:bg-white/10 transition-colors mx-1 h-24 relative" onClick={() => handleNumberClick('7')}>
+                    <div className="grid grid-rows-3 gap-y-0.5">
+                      <div data-number="7" className="cursor-pointer hover:bg-white/10 transition-colors relative h-full" onClick={() => handleNumberClick('7')}>
                         {bets['7'] && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             {getChipCombination(bets['7']).map((chipValue: number, index: number) => (
@@ -330,23 +326,23 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -12}px)`,
+                                  transform: `translateY(${index * -2}px)`,
                                   zIndex: index + 10
                                 }}
                               >
                                 <Image
                                   src={`/game/${chipValue === 1 ? 'dollar' : chipValue === 5 ? 'five_dollar' : 'ten_dollar'}_chip.svg`}
                                   alt={`$${chipValue} chip`}
-                                  width={64}
-                                  height={64}
-                                  className="w-16 h-16"
+                                  width={12}
+                                  height={12}
+                                  className="w-12 h-12 md:w-16 md:h-16"
                                 />
                               </div>
                             ))}
                           </div>
                         )}
                       </div>
-                      <div data-number="17" className="cursor-pointer hover:bg-white/10 transition-colors mx-1 h-24 relative" onClick={() => handleNumberClick('17')}>
+                      <div data-number="17" className="cursor-pointer hover:bg-white/10 transition-colors relative h-full" onClick={() => handleNumberClick('17')}>
                         {bets['17'] && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             {getChipCombination(bets['17']).map((chipValue: number, index: number) => (
@@ -354,23 +350,23 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -12}px)`,
+                                  transform: `translateY(${index * -2}px)`,
                                   zIndex: index + 10
                                 }}
                               >
                                 <Image
                                   src={`/game/${chipValue === 1 ? 'dollar' : chipValue === 5 ? 'five_dollar' : 'ten_dollar'}_chip.svg`}
                                   alt={`$${chipValue} chip`}
-                                  width={64}
-                                  height={64}
-                                  className="w-16 h-16"
+                                  width={12}
+                                  height={12}
+                                  className="w-12 h-12 md:w-16 md:h-16"
                                 />
                               </div>
                             ))}
                           </div>
                         )}
                       </div>
-                      <div data-number="20" className="cursor-pointer hover:bg-white/10 transition-colors mx-1 h-24 relative" onClick={() => handleNumberClick('20')}>
+                      <div data-number="20" className="cursor-pointer hover:bg-white/10 transition-colors relative h-full" onClick={() => handleNumberClick('20')}>
                         {bets['20'] && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             {getChipCombination(bets['20']).map((chipValue: number, index: number) => (
@@ -378,16 +374,16 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -12}px)`,
+                                  transform: `translateY(${index * -2}px)`,
                                   zIndex: index + 10
                                 }}
                               >
                                 <Image
                                   src={`/game/${chipValue === 1 ? 'dollar' : chipValue === 5 ? 'five_dollar' : 'ten_dollar'}_chip.svg`}
                                   alt={`$${chipValue} chip`}
-                                  width={64}
-                                  height={64}
-                                  className="w-16 h-16"
+                                  width={12}
+                                  height={12}
+                                  className="w-12 h-12 md:w-16 md:h-16"
                                 />
                               </div>
                             ))}
@@ -396,8 +392,8 @@ export default function Game() {
                       </div>
                     </div>
                     {/* Column 3 */}
-                    <div className="grid grid-rows-3 gap-y-4">
-                      <div data-number="9" className="cursor-pointer hover:bg-white/10 transition-colors mx-1 h-24 relative" onClick={() => handleNumberClick('9')}>
+                    <div className="grid grid-rows-3 gap-y-0.5">
+                      <div data-number="9" className="cursor-pointer hover:bg-white/10 transition-colors relative h-full" onClick={() => handleNumberClick('9')}>
                         {bets['9'] && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             {getChipCombination(bets['9']).map((chipValue: number, index: number) => (
@@ -405,23 +401,23 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -12}px)`,
+                                  transform: `translateY(${index * -2}px)`,
                                   zIndex: index + 10
                                 }}
                               >
                                 <Image
                                   src={`/game/${chipValue === 1 ? 'dollar' : chipValue === 5 ? 'five_dollar' : 'ten_dollar'}_chip.svg`}
                                   alt={`$${chipValue} chip`}
-                                  width={64}
-                                  height={64}
-                                  className="w-16 h-16"
+                                  width={12}
+                                  height={12}
+                                  className="w-12 h-12 md:w-16 md:h-16"
                                 />
                               </div>
                             ))}
                           </div>
                         )}
                       </div>
-                      <div data-number="14" className="cursor-pointer hover:bg-white/10 transition-colors mx-1 h-24 relative" onClick={() => handleNumberClick('14')}>
+                      <div data-number="14" className="cursor-pointer hover:bg-white/10 transition-colors relative h-full" onClick={() => handleNumberClick('14')}>
                         {bets['14'] && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             {getChipCombination(bets['14']).map((chipValue: number, index: number) => (
@@ -429,23 +425,23 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -12}px)`,
+                                  transform: `translateY(${index * -2}px)`,
                                   zIndex: index + 10
                                 }}
                               >
                                 <Image
                                   src={`/game/${chipValue === 1 ? 'dollar' : chipValue === 5 ? 'five_dollar' : 'ten_dollar'}_chip.svg`}
                                   alt={`$${chipValue} chip`}
-                                  width={64}
-                                  height={64}
-                                  className="w-16 h-16"
+                                  width={12}
+                                  height={12}
+                                  className="w-12 h-12 md:w-16 md:h-16"
                                 />
                               </div>
                             ))}
                           </div>
                         )}
                       </div>
-                      <div data-number="11" className="cursor-pointer hover:bg-white/10 transition-colors mx-1 h-24 relative" onClick={() => handleNumberClick('11')}>
+                      <div data-number="11" className="cursor-pointer hover:bg-white/10 transition-colors relative h-full" onClick={() => handleNumberClick('11')}>
                         {bets['11'] && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             {getChipCombination(bets['11']).map((chipValue: number, index: number) => (
@@ -453,16 +449,16 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -12}px)`,
+                                  transform: `translateY(${index * -2}px)`,
                                   zIndex: index + 10
                                 }}
                               >
                                 <Image
                                   src={`/game/${chipValue === 1 ? 'dollar' : chipValue === 5 ? 'five_dollar' : 'ten_dollar'}_chip.svg`}
                                   alt={`$${chipValue} chip`}
-                                  width={64}
-                                  height={64}
-                                  className="w-16 h-16"
+                                  width={12}
+                                  height={12}
+                                  className="w-12 h-12 md:w-16 md:h-16"
                                 />
                               </div>
                             ))}
@@ -471,8 +467,8 @@ export default function Game() {
                       </div>
                     </div>
                     {/* Column 4 */}
-                    <div className="grid grid-rows-3 gap-y-4">
-                      <div data-number="12" className="cursor-pointer hover:bg-white/10 transition-colors mx-1 h-24 relative" onClick={() => handleNumberClick('12')}>
+                    <div className="grid grid-rows-3 gap-y-0.5">
+                      <div data-number="12" className="cursor-pointer hover:bg-white/10 transition-colors relative h-full" onClick={() => handleNumberClick('12')}>
                         {bets['12'] && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             {getChipCombination(bets['12']).map((chipValue: number, index: number) => (
@@ -480,23 +476,23 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -12}px)`,
+                                  transform: `translateY(${index * -2}px)`,
                                   zIndex: index + 10
                                 }}
                               >
                                 <Image
                                   src={`/game/${chipValue === 1 ? 'dollar' : chipValue === 5 ? 'five_dollar' : 'ten_dollar'}_chip.svg`}
                                   alt={`$${chipValue} chip`}
-                                  width={64}
-                                  height={64}
-                                  className="w-16 h-16"
+                                  width={12}
+                                  height={12}
+                                  className="w-12 h-12 md:w-16 md:h-16"
                                 />
                               </div>
                             ))}
                           </div>
                         )}
                       </div>
-                      <div data-number="21" className="cursor-pointer hover:bg-white/10 transition-colors mx-1 h-24 relative" onClick={() => handleNumberClick('21')}>
+                      <div data-number="21" className="cursor-pointer hover:bg-white/10 transition-colors relative h-full" onClick={() => handleNumberClick('21')}>
                         {bets['21'] && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             {getChipCombination(bets['21']).map((chipValue: number, index: number) => (
@@ -504,23 +500,23 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -12}px)`,
+                                  transform: `translateY(${index * -2}px)`,
                                   zIndex: index + 10
                                 }}
                               >
                                 <Image
                                   src={`/game/${chipValue === 1 ? 'dollar' : chipValue === 5 ? 'five_dollar' : 'ten_dollar'}_chip.svg`}
                                   alt={`$${chipValue} chip`}
-                                  width={64}
-                                  height={64}
-                                  className="w-16 h-16"
+                                  width={12}
+                                  height={12}
+                                  className="w-12 h-12 md:w-16 md:h-16"
                                 />
                               </div>
                             ))}
                           </div>
                         )}
                       </div>
-                      <div data-number="19" className="cursor-pointer hover:bg-white/10 transition-colors mx-1 h-24 relative" onClick={() => handleNumberClick('19')}>
+                      <div data-number="19" className="cursor-pointer hover:bg-white/10 transition-colors relative h-full" onClick={() => handleNumberClick('19')}>
                         {bets['19'] && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             {getChipCombination(bets['19']).map((chipValue: number, index: number) => (
@@ -528,16 +524,16 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -12}px)`,
+                                  transform: `translateY(${index * -2}px)`,
                                   zIndex: index + 10
                                 }}
                               >
                                 <Image
                                   src={`/game/${chipValue === 1 ? 'dollar' : chipValue === 5 ? 'five_dollar' : 'ten_dollar'}_chip.svg`}
                                   alt={`$${chipValue} chip`}
-                                  width={64}
-                                  height={64}
-                                  className="w-16 h-16"
+                                  width={12}
+                                  height={12}
+                                  className="w-12 h-12 md:w-16 md:h-16"
                                 />
                               </div>
                             ))}
@@ -546,8 +542,8 @@ export default function Game() {
                       </div>
                     </div>
                     {/* Column 5 */}
-                    <div className="grid grid-rows-3 gap-y-4">
-                      <div data-number="2" className="cursor-pointer hover:bg-white/10 transition-colors mx-1 h-24 relative" onClick={() => handleNumberClick('2')}>
+                    <div className="grid grid-rows-3 gap-y-0.5">
+                      <div data-number="2" className="cursor-pointer hover:bg-white/10 transition-colors relative h-full" onClick={() => handleNumberClick('2')}>
                         {bets['2'] && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             {getChipCombination(bets['2']).map((chipValue: number, index: number) => (
@@ -555,23 +551,23 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -12}px)`,
+                                  transform: `translateY(${index * -2}px)`,
                                   zIndex: index + 10
                                 }}
                               >
                                 <Image
                                   src={`/game/${chipValue === 1 ? 'dollar' : chipValue === 5 ? 'five_dollar' : 'ten_dollar'}_chip.svg`}
                                   alt={`$${chipValue} chip`}
-                                  width={64}
-                                  height={64}
-                                  className="w-16 h-16"
+                                  width={12}
+                                  height={12}
+                                  className="w-12 h-12 md:w-16 md:h-16"
                                 />
                               </div>
                             ))}
                           </div>
                         )}
                       </div>
-                      <div data-number="4" className="cursor-pointer hover:bg-white/10 transition-colors mx-1 h-24 relative" onClick={() => handleNumberClick('4')}>
+                      <div data-number="4" className="cursor-pointer hover:bg-white/10 transition-colors relative h-full" onClick={() => handleNumberClick('4')}>
                         {bets['4'] && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             {getChipCombination(bets['4']).map((chipValue: number, index: number) => (
@@ -579,23 +575,23 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -12}px)`,
+                                  transform: `translateY(${index * -2}px)`,
                                   zIndex: index + 10
                                 }}
                               >
                                 <Image
                                   src={`/game/${chipValue === 1 ? 'dollar' : chipValue === 5 ? 'five_dollar' : 'ten_dollar'}_chip.svg`}
                                   alt={`$${chipValue} chip`}
-                                  width={64}
-                                  height={64}
-                                  className="w-16 h-16"
+                                  width={12}
+                                  height={12}
+                                  className="w-12 h-12 md:w-16 md:h-16"
                                 />
                               </div>
                             ))}
                           </div>
                         )}
                       </div>
-                      <div data-number="6" className="cursor-pointer hover:bg-white/10 transition-colors mx-1 h-24 relative" onClick={() => handleNumberClick('6')}>
+                      <div data-number="6" className="cursor-pointer hover:bg-white/10 transition-colors relative h-full" onClick={() => handleNumberClick('6')}>
                         {bets['6'] && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             {getChipCombination(bets['6']).map((chipValue: number, index: number) => (
@@ -603,16 +599,16 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -12}px)`,
+                                  transform: `translateY(${index * -2}px)`,
                                   zIndex: index + 10
                                 }}
                               >
                                 <Image
                                   src={`/game/${chipValue === 1 ? 'dollar' : chipValue === 5 ? 'five_dollar' : 'ten_dollar'}_chip.svg`}
                                   alt={`$${chipValue} chip`}
-                                  width={64}
-                                  height={64}
-                                  className="w-16 h-16"
+                                  width={12}
+                                  height={12}
+                                  className="w-12 h-12 md:w-16 md:h-16"
                                 />
                               </div>
                             ))}
@@ -621,8 +617,8 @@ export default function Game() {
                       </div>
                     </div>
                     {/* Column 6 */}
-                    <div className="grid grid-rows-3 gap-y-4">
-                      <div data-number="5" className="cursor-pointer hover:bg-white/10 transition-colors mx-1 h-24 relative" onClick={() => handleNumberClick('5')}>
+                    <div className="grid grid-rows-3 gap-y-0.5">
+                      <div data-number="5" className="cursor-pointer hover:bg-white/10 transition-colors relative h-full" onClick={() => handleNumberClick('5')}>
                         {bets['5'] && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             {getChipCombination(bets['5']).map((chipValue: number, index: number) => (
@@ -630,23 +626,23 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -12}px)`,
+                                  transform: `translateY(${index * -2}px)`,
                                   zIndex: index + 10
                                 }}
                               >
                                 <Image
                                   src={`/game/${chipValue === 1 ? 'dollar' : chipValue === 5 ? 'five_dollar' : 'ten_dollar'}_chip.svg`}
                                   alt={`$${chipValue} chip`}
-                                  width={64}
-                                  height={64}
-                                  className="w-16 h-16"
+                                  width={12}
+                                  height={12}
+                                  className="w-12 h-12 md:w-16 md:h-16"
                                 />
                               </div>
                             ))}
                           </div>
                         )}
                       </div>
-                      <div data-number="18" className="cursor-pointer hover:bg-white/10 transition-colors mx-1 h-24 relative" onClick={() => handleNumberClick('18')}>
+                      <div data-number="18" className="cursor-pointer hover:bg-white/10 transition-colors relative h-full" onClick={() => handleNumberClick('18')}>
                         {bets['18'] && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             {getChipCombination(bets['18']).map((chipValue: number, index: number) => (
@@ -654,23 +650,23 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -12}px)`,
+                                  transform: `translateY(${index * -2}px)`,
                                   zIndex: index + 10
                                 }}
                               >
                                 <Image
                                   src={`/game/${chipValue === 1 ? 'dollar' : chipValue === 5 ? 'five_dollar' : 'ten_dollar'}_chip.svg`}
                                   alt={`$${chipValue} chip`}
-                                  width={64}
-                                  height={64}
-                                  className="w-16 h-16"
+                                  width={12}
+                                  height={12}
+                                  className="w-12 h-12 md:w-16 md:h-16"
                                 />
                               </div>
                             ))}
                           </div>
                         )}
                       </div>
-                      <div data-number="8" className="cursor-pointer hover:bg-white/10 transition-colors mx-1 h-24 relative" onClick={() => handleNumberClick('8')}>
+                      <div data-number="8" className="cursor-pointer hover:bg-white/10 transition-colors relative h-full" onClick={() => handleNumberClick('8')}>
                         {bets['8'] && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             {getChipCombination(bets['8']).map((chipValue: number, index: number) => (
@@ -678,16 +674,16 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -12}px)`,
+                                  transform: `translateY(${index * -2}px)`,
                                   zIndex: index + 10
                                 }}
                               >
                                 <Image
                                   src={`/game/${chipValue === 1 ? 'dollar' : chipValue === 5 ? 'five_dollar' : 'ten_dollar'}_chip.svg`}
                                   alt={`$${chipValue} chip`}
-                                  width={64}
-                                  height={64}
-                                  className="w-16 h-16"
+                                  width={12}
+                                  height={12}
+                                  className="w-12 h-12 md:w-16 md:h-16"
                                 />
                               </div>
                             ))}
@@ -696,8 +692,8 @@ export default function Game() {
                       </div>
                     </div>
                     {/* Column 7 */}
-                    <div className="grid grid-rows-3 gap-y-4">
-                      <div data-number="15" className="cursor-pointer hover:bg-white/10 transition-colors mx-1 h-24 relative" onClick={() => handleNumberClick('15')}>
+                    <div className="grid grid-rows-3 gap-y-0.5">
+                      <div data-number="15" className="cursor-pointer hover:bg-white/10 transition-colors relative h-full" onClick={() => handleNumberClick('15')}>
                         {bets['15'] && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             {getChipCombination(bets['15']).map((chipValue: number, index: number) => (
@@ -705,23 +701,23 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -12}px)`,
+                                  transform: `translateY(${index * -2}px)`,
                                   zIndex: index + 10
                                 }}
                               >
                                 <Image
                                   src={`/game/${chipValue === 1 ? 'dollar' : chipValue === 5 ? 'five_dollar' : 'ten_dollar'}_chip.svg`}
                                   alt={`$${chipValue} chip`}
-                                  width={64}
-                                  height={64}
-                                  className="w-16 h-16"
+                                  width={12}
+                                  height={12}
+                                  className="w-12 h-12 md:w-16 md:h-16"
                                 />
                               </div>
                             ))}
                           </div>
                         )}
                       </div>
-                      <div data-number="3" className="cursor-pointer hover:bg-white/10 transition-colors mx-1 h-24 relative" onClick={() => handleNumberClick('3')}>
+                      <div data-number="3" className="cursor-pointer hover:bg-white/10 transition-colors relative h-full" onClick={() => handleNumberClick('3')}>
                         {bets['3'] && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             {getChipCombination(bets['3']).map((chipValue: number, index: number) => (
@@ -729,23 +725,23 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -12}px)`,
+                                  transform: `translateY(${index * -2}px)`,
                                   zIndex: index + 10
                                 }}
                               >
                                 <Image
                                   src={`/game/${chipValue === 1 ? 'dollar' : chipValue === 5 ? 'five_dollar' : 'ten_dollar'}_chip.svg`}
                                   alt={`$${chipValue} chip`}
-                                  width={64}
-                                  height={64}
-                                  className="w-16 h-16"
+                                  width={12}
+                                  height={12}
+                                  className="w-12 h-12 md:w-16 md:h-16"
                                 />
                               </div>
                             ))}
                           </div>
                         )}
                       </div>
-                      <div data-number="13" className="cursor-pointer hover:bg-white/10 transition-colors mx-1 h-24 relative" onClick={() => handleNumberClick('13')}>
+                      <div data-number="13" className="cursor-pointer hover:bg-white/10 transition-colors relative h-full" onClick={() => handleNumberClick('13')}>
                         {bets['13'] && (
                           <div className="absolute inset-0 flex items-center justify-center">
                             {getChipCombination(bets['13']).map((chipValue: number, index: number) => (
@@ -753,16 +749,16 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -12}px)`,
+                                  transform: `translateY(${index * -2}px)`,
                                   zIndex: index + 10
                                 }}
                               >
                                 <Image
                                   src={`/game/${chipValue === 1 ? 'dollar' : chipValue === 5 ? 'five_dollar' : 'ten_dollar'}_chip.svg`}
                                   alt={`$${chipValue} chip`}
-                                  width={64}
-                                  height={64}
-                                  className="w-16 h-16"
+                                  width={12}
+                                  height={12}
+                                  className="w-12 h-12 md:w-16 md:h-16"
                                 />
                               </div>
                             ))}
@@ -776,7 +772,7 @@ export default function Game() {
                   <div className="col-span-1">
                     <div 
                       data-number="00"
-                      className="w-full h-full cursor-pointer hover:bg-white/10 transition-colors mx-1 relative"
+                      className="w-full h-full cursor-pointer hover:bg-white/10 transition-colors relative"
                       onClick={() => handleNumberClick('00')}
                     >
                       {bets['00'] && (
@@ -786,16 +782,16 @@ export default function Game() {
                               key={index}
                               className="absolute"
                               style={{
-                                transform: `translateY(${index * -12}px)`,
+                                transform: `translateY(${index * -2}px)`,
                                 zIndex: index + 10
                               }}
                             >
                               <Image
                                 src={`/game/${chipValue === 1 ? 'dollar' : chipValue === 5 ? 'five_dollar' : 'ten_dollar'}_chip.svg`}
                                 alt={`$${chipValue} chip`}
-                                width={64}
-                                height={64}
-                                className="w-16 h-16"
+                                width={12}
+                                height={12}
+                                className="w-12 h-12 md:w-16 md:h-16"
                               />
                             </div>
                           ))}

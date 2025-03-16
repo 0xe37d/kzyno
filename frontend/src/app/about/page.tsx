@@ -8,7 +8,7 @@ import { NEXT_PUBLIC_COMMIT_HASH } from '../commit-hash'
 export default function About() {
   return (
     <div className="min-h-screen flex flex-col">
-      <nav className="fixed top-0 right-0 p-4 md:p-6 z-10">
+      <nav className="fixed top-0 right-0 p-4 md:p-6 z-50">
         <div className="flex gap-4">
           <Link 
             href="/game" 
@@ -25,7 +25,7 @@ export default function About() {
         </div>
       </nav>
 
-      <main className="flex-1 flex items-center justify-center p-4">
+      <main className="flex-1 flex items-center justify-center p-4 pt-16 md:pt-20">
         <div className="w-full md:max-w-6xl mx-auto px-2 md:px-0">
           <h1 className={`text-3xl md:text-6xl text-white font-bold mb-6 md:mb-8 ${daydream.className}`}>
             About kzyno
