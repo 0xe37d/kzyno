@@ -251,7 +251,7 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -2}px)`,
+                                  transform: `translateY(${index * -8}px)`,
                                   zIndex: index + 10
                                 }}
                               >
@@ -275,7 +275,7 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -2}px)`,
+                                  transform: `translateY(${index * -8}px)`,
                                   zIndex: index + 10
                                 }}
                               >
@@ -299,7 +299,7 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -2}px)`,
+                                  transform: `translateY(${index * -8}px)`,
                                   zIndex: index + 10
                                 }}
                               >
@@ -326,7 +326,7 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -2}px)`,
+                                  transform: `translateY(${index * -8}px)`,
                                   zIndex: index + 10
                                 }}
                               >
@@ -350,7 +350,7 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -2}px)`,
+                                  transform: `translateY(${index * -8}px)`,
                                   zIndex: index + 10
                                 }}
                               >
@@ -374,7 +374,7 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -2}px)`,
+                                  transform: `translateY(${index * -8}px)`,
                                   zIndex: index + 10
                                 }}
                               >
@@ -401,7 +401,7 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -2}px)`,
+                                  transform: `translateY(${index * -8}px)`,
                                   zIndex: index + 10
                                 }}
                               >
@@ -425,7 +425,7 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -2}px)`,
+                                  transform: `translateY(${index * -8}px)`,
                                   zIndex: index + 10
                                 }}
                               >
@@ -449,7 +449,7 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -2}px)`,
+                                  transform: `translateY(${index * -8}px)`,
                                   zIndex: index + 10
                                 }}
                               >
@@ -476,7 +476,7 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -2}px)`,
+                                  transform: `translateY(${index * -8}px)`,
                                   zIndex: index + 10
                                 }}
                               >
@@ -500,7 +500,7 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -2}px)`,
+                                  transform: `translateY(${index * -8}px)`,
                                   zIndex: index + 10
                                 }}
                               >
@@ -524,7 +524,7 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -2}px)`,
+                                  transform: `translateY(${index * -8}px)`,
                                   zIndex: index + 10
                                 }}
                               >
@@ -551,7 +551,7 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -2}px)`,
+                                  transform: `translateY(${index * -8}px)`,
                                   zIndex: index + 10
                                 }}
                               >
@@ -575,7 +575,7 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -2}px)`,
+                                  transform: `translateY(${index * -8}px)`,
                                   zIndex: index + 10
                                 }}
                               >
@@ -599,7 +599,7 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -2}px)`,
+                                  transform: `translateY(${index * -8}px)`,
                                   zIndex: index + 10
                                 }}
                               >
@@ -626,7 +626,7 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -2}px)`,
+                                  transform: `translateY(${index * -8}px)`,
                                   zIndex: index + 10
                                 }}
                               >
@@ -650,7 +650,7 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -2}px)`,
+                                  transform: `translateY(${index * -8}px)`,
                                   zIndex: index + 10
                                 }}
                               >
@@ -674,7 +674,7 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -2}px)`,
+                                  transform: `translateY(${index * -8}px)`,
                                   zIndex: index + 10
                                 }}
                               >
@@ -701,7 +701,7 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -2}px)`,
+                                  transform: `translateY(${index * -8}px)`,
                                   zIndex: index + 10
                                 }}
                               >
@@ -725,7 +725,7 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -2}px)`,
+                                  transform: `translateY(${index * -8}px)`,
                                   zIndex: index + 10
                                 }}
                               >
@@ -749,7 +749,7 @@ export default function Game() {
                                 key={index}
                                 className="absolute"
                                 style={{
-                                  transform: `translateY(${index * -2}px)`,
+                                  transform: `translateY(${index * -8}px)`,
                                   zIndex: index + 10
                                 }}
                               >
@@ -782,7 +782,7 @@ export default function Game() {
                               key={index}
                               className="absolute"
                               style={{
-                                transform: `translateY(${index * -2}px)`,
+                                transform: `translateY(${index * -8}px)`,
                                 zIndex: index + 10
                               }}
                             >
