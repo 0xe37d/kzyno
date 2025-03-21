@@ -227,7 +227,7 @@ export default function Game() {
                     alt="Roulette Wheel"
                     fill
                     priority
-                    className="object-contain"
+                    className="object-contain select-none pointer-events-none"
                   />
                 </div>
               </div>
@@ -260,7 +260,7 @@ export default function Game() {
                                   alt={`$${chipValue} chip`}
                                   width={12}
                                   height={12}
-                                  className="w-12 h-12 md:w-16 md:h-16"
+                                  className="w-12 h-12 md:w-16 md:h-16 select-none pointer-events-none"
                                 />
                               </div>
                             ))}
@@ -284,7 +284,7 @@ export default function Game() {
                                   alt={`$${chipValue} chip`}
                                   width={12}
                                   height={12}
-                                  className="w-12 h-12 md:w-16 md:h-16"
+                                  className="w-12 h-12 md:w-16 md:h-16 select-none pointer-events-none"
                                 />
                               </div>
                             ))}
@@ -308,7 +308,7 @@ export default function Game() {
                                   alt={`$${chipValue} chip`}
                                   width={12}
                                   height={12}
-                                  className="w-12 h-12 md:w-16 md:h-16"
+                                  className="w-12 h-12 md:w-16 md:h-16 select-none pointer-events-none"
                                 />
                               </div>
                             ))}
@@ -335,7 +335,7 @@ export default function Game() {
                                   alt={`$${chipValue} chip`}
                                   width={12}
                                   height={12}
-                                  className="w-12 h-12 md:w-16 md:h-16"
+                                  className="w-12 h-12 md:w-16 md:h-16 select-none pointer-events-none"
                                 />
                               </div>
                             ))}
@@ -359,7 +359,7 @@ export default function Game() {
                                   alt={`$${chipValue} chip`}
                                   width={12}
                                   height={12}
-                                  className="w-12 h-12 md:w-16 md:h-16"
+                                  className="w-12 h-12 md:w-16 md:h-16 select-none pointer-events-none"
                                 />
                               </div>
                             ))}
@@ -383,7 +383,7 @@ export default function Game() {
                                   alt={`$${chipValue} chip`}
                                   width={12}
                                   height={12}
-                                  className="w-12 h-12 md:w-16 md:h-16"
+                                  className="w-12 h-12 md:w-16 md:h-16 select-none pointer-events-none"
                                 />
                               </div>
                             ))}
@@ -410,7 +410,7 @@ export default function Game() {
                                   alt={`$${chipValue} chip`}
                                   width={12}
                                   height={12}
-                                  className="w-12 h-12 md:w-16 md:h-16"
+                                  className="w-12 h-12 md:w-16 md:h-16 select-none pointer-events-none"
                                 />
                               </div>
                             ))}
@@ -434,7 +434,7 @@ export default function Game() {
                                   alt={`$${chipValue} chip`}
                                   width={12}
                                   height={12}
-                                  className="w-12 h-12 md:w-16 md:h-16"
+                                  className="w-12 h-12 md:w-16 md:h-16 select-none pointer-events-none"
                                 />
                               </div>
                             ))}
@@ -458,7 +458,7 @@ export default function Game() {
                                   alt={`$${chipValue} chip`}
                                   width={12}
                                   height={12}
-                                  className="w-12 h-12 md:w-16 md:h-16"
+                                  className="w-12 h-12 md:w-16 md:h-16 select-none pointer-events-none"
                                 />
                               </div>
                             ))}
@@ -485,7 +485,7 @@ export default function Game() {
                                   alt={`$${chipValue} chip`}
                                   width={12}
                                   height={12}
-                                  className="w-12 h-12 md:w-16 md:h-16"
+                                  className="w-12 h-12 md:w-16 md:h-16 select-none pointer-events-none"
                                 />
                               </div>
                             ))}
@@ -509,7 +509,7 @@ export default function Game() {
                                   alt={`$${chipValue} chip`}
                                   width={12}
                                   height={12}
-                                  className="w-12 h-12 md:w-16 md:h-16"
+                                  className="w-12 h-12 md:w-16 md:h-16 select-none pointer-events-none"
                                 />
                               </div>
                             ))}
@@ -533,7 +533,7 @@ export default function Game() {
                                   alt={`$${chipValue} chip`}
                                   width={12}
                                   height={12}
-                                  className="w-12 h-12 md:w-16 md:h-16"
+                                  className="w-12 h-12 md:w-16 md:h-16 select-none pointer-events-none"
                                 />
                               </div>
                             ))}
@@ -560,7 +560,7 @@ export default function Game() {
                                   alt={`$${chipValue} chip`}
                                   width={12}
                                   height={12}
-                                  className="w-12 h-12 md:w-16 md:h-16"
+                                  className="w-12 h-12 md:w-16 md:h-16 select-none pointer-events-none"
                                 />
                               </div>
                             ))}
@@ -584,7 +584,7 @@ export default function Game() {
                                   alt={`$${chipValue} chip`}
                                   width={12}
                                   height={12}
-                                  className="w-12 h-12 md:w-16 md:h-16"
+                                  className="w-12 h-12 md:w-16 md:h-16 select-none pointer-events-none"
                                 />
                               </div>
                             ))}
@@ -608,7 +608,7 @@ export default function Game() {
                                   alt={`$${chipValue} chip`}
                                   width={12}
                                   height={12}
-                                  className="w-12 h-12 md:w-16 md:h-16"
+                                  className="w-12 h-12 md:w-16 md:h-16 select-none pointer-events-none"
                                 />
                               </div>
                             ))}
@@ -635,7 +635,7 @@ export default function Game() {
                                   alt={`$${chipValue} chip`}
                                   width={12}
                                   height={12}
-                                  className="w-12 h-12 md:w-16 md:h-16"
+                                  className="w-12 h-12 md:w-16 md:h-16 select-none pointer-events-none"
                                 />
                               </div>
                             ))}
@@ -659,7 +659,7 @@ export default function Game() {
                                   alt={`$${chipValue} chip`}
                                   width={12}
                                   height={12}
-                                  className="w-12 h-12 md:w-16 md:h-16"
+                                  className="w-12 h-12 md:w-16 md:h-16 select-none pointer-events-none"
                                 />
                               </div>
                             ))}
@@ -683,7 +683,7 @@ export default function Game() {
                                   alt={`$${chipValue} chip`}
                                   width={12}
                                   height={12}
-                                  className="w-12 h-12 md:w-16 md:h-16"
+                                  className="w-12 h-12 md:w-16 md:h-16 select-none pointer-events-none"
                                 />
                               </div>
                             ))}
@@ -710,7 +710,7 @@ export default function Game() {
                                   alt={`$${chipValue} chip`}
                                   width={12}
                                   height={12}
-                                  className="w-12 h-12 md:w-16 md:h-16"
+                                  className="w-12 h-12 md:w-16 md:h-16 select-none pointer-events-none"
                                 />
                               </div>
                             ))}
@@ -734,7 +734,7 @@ export default function Game() {
                                   alt={`$${chipValue} chip`}
                                   width={12}
                                   height={12}
-                                  className="w-12 h-12 md:w-16 md:h-16"
+                                  className="w-12 h-12 md:w-16 md:h-16 select-none pointer-events-none"
                                 />
                               </div>
                             ))}
@@ -758,7 +758,7 @@ export default function Game() {
                                   alt={`$${chipValue} chip`}
                                   width={12}
                                   height={12}
-                                  className="w-12 h-12 md:w-16 md:h-16"
+                                  className="w-12 h-12 md:w-16 md:h-16 select-none pointer-events-none"
                                 />
                               </div>
                             ))}
@@ -791,7 +791,7 @@ export default function Game() {
                                 alt={`$${chipValue} chip`}
                                 width={12}
                                 height={12}
-                                className="w-12 h-12 md:w-16 md:h-16"
+                                className="w-12 h-12 md:w-16 md:h-16 select-none pointer-events-none"
                               />
                             </div>
                           ))}
