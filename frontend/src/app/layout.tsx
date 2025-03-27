@@ -8,11 +8,7 @@ export const metadata: Metadata = {
   description: 'The future of decentralized casino gaming',
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body className={`${hyperlegible.className} antialiased`}>{children}</body>
