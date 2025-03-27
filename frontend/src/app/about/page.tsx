@@ -11,12 +11,6 @@ export default function About() {
       <nav className="fixed top-0 right-0 p-4 md:p-6 z-50">
         <div className="flex gap-4">
           <Link 
-            href="/game" 
-            className={`text-lg md:text-xl text-white hover:text-pink-200 transition-colors ${daydream.className}`}
-          >
-            Game
-          </Link>
-          <Link 
             href="/" 
             className={`text-lg md:text-xl text-white hover:text-pink-200 transition-colors ${daydream.className}`}
           >

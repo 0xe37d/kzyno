@@ -26,10 +26,10 @@ export default function Home() {
             About
           </Link>
           <Link 
-            href="/game" 
-            className="text-lg md:text-xl text-white hover:text-pink-200 transition-colors"
+            href="/arcade" 
+            className={`text-2xl md:text-3xl text-white hover:text-pink-200 transition-colors ${daydream.className}`}
           >
-            Game
+            Play Now
           </Link>
         </div>
       </nav>

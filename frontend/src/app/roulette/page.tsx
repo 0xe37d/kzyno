@@ -157,25 +157,32 @@ export default function Game() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-[#1a472a] relative overflow-hidden">
+      {/* Casino-style decorative elements */}
+      <div className="absolute inset-0 bg-[url('/game/felt.jpg')] opacity-20" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent" />
+      
+      {/* Decorative corner elements */}
+      <div className="absolute top-0 left-0 w-32 h-32 bg-[#ffd700]/5 rounded-br-full" />
+      <div className="absolute top-0 right-0 w-32 h-32 bg-[#ffd700]/5 rounded-bl-full" />
+      <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#ffd700]/5 rounded-tr-full" />
+      <div className="absolute bottom-0 right-0 w-32 h-32 bg-[#ffd700]/5 rounded-tl-full" />
+
+      {/* Subtle pattern overlay */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_0%,_rgba(0,0,0,0.1)_100%)]" />
+
       <nav className="fixed top-0 right-0 p-4 md:p-6 z-10">
         <div className="flex gap-4">
           <Link 
-            href="/about" 
+            href="/arcade" 
             className={`text-lg md:text-xl text-white hover:text-pink-200 transition-colors ${daydream.className}`}
           >
-            About
-          </Link>
-          <Link 
-            href="/" 
-            className={`text-lg md:text-xl text-white hover:text-pink-200 transition-colors ${daydream.className}`}
-          >
-            Home
+            Back to Arcade
           </Link>
         </div>
       </nav>
 
-      <main className="flex-1 flex items-center justify-center p-4">
+      <main className="flex-1 flex items-center justify-center p-4 relative">
         <div className="w-full max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-start items-center justify-center gap-8">
             {/* Game Section (Wheel + Board) */}
@@ -183,7 +190,7 @@ export default function Game() {
               {/* Wheel Section */}
               <div className="w-full max-w-[min(100vw,600px)] aspect-square relative flex items-center justify-center cursor-pointer" onClick={handleSpin}>
                 {/* Winner indicator triangle */}
-                <div className="absolute top-[8%] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[15px] border-l-transparent border-r-[15px] border-r-transparent border-t-[30px] border-t-black z-10 filter drop-shadow-[0_0_8px_rgba(0,0,0,0.9)]" />
+                <div className="absolute top-[8%] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[15px] border-l-transparent border-r-[15px] border-r-transparent border-t-[30px] border-t-[#ffd700] z-10 filter drop-shadow-[0_0_8px_rgba(0,0,0,0.9)]" />
 
                 {/* Winning Amount Animation */}
                 {showWinnings && winAmount > 0 && (
@@ -202,10 +209,10 @@ export default function Game() {
                       <div
                         className="animate-win-bounce"
                         style={{
-                          color: '#4ade80',
+                          color: '#ffd700',
                           fontSize: 'clamp(3rem, 10vw, 8rem)',
                           fontWeight: 'bold',
-                          textShadow: '0 0 30px rgba(74, 222, 128, 0.7)',
+                          textShadow: '0 0 30px rgba(255, 215, 0, 0.7)',
                           WebkitTextStroke: '3px rgba(0, 0, 0, 0.5)',
                           fontFamily: daydream.style.fontFamily,
                           transform: 'rotateX(10deg)',
@@ -813,19 +820,19 @@ export default function Game() {
                 <div className="w-full flex flex-row md:flex-col gap-4 items-center justify-center">
                   <div className="flex gap-2 items-center">
                     <button 
-                      className={`px-3 py-1 md:px-4 md:py-2 ${betUnit === 1 ? 'bg-white/30' : 'bg-white/10'} text-white rounded hover:bg-white/20 transition-colors ${daydream.className} text-sm md:text-base`}
+                      className={`px-3 py-1 md:px-4 md:py-2 ${betUnit === 1 ? 'bg-[#ffd700]/30' : 'bg-white/10'} text-white rounded hover:bg-[#ffd700]/20 transition-colors ${daydream.className} text-sm md:text-base`}
                       onClick={() => handleBetUnitChange(1)}
                     >
                       $1
                     </button>
                     <button 
-                      className={`px-3 py-1 md:px-4 md:py-2 ${betUnit === 5 ? 'bg-white/30' : 'bg-white/10'} text-white rounded hover:bg-white/20 transition-colors ${daydream.className} text-sm md:text-base`}
+                      className={`px-3 py-1 md:px-4 md:py-2 ${betUnit === 5 ? 'bg-[#ffd700]/30' : 'bg-white/10'} text-white rounded hover:bg-[#ffd700]/20 transition-colors ${daydream.className} text-sm md:text-base`}
                       onClick={() => handleBetUnitChange(5)}
                     >
                       $5
                     </button>
                     <button 
-                      className={`px-3 py-1 md:px-4 md:py-2 ${betUnit === 10 ? 'bg-white/30' : 'bg-white/10'} text-white rounded hover:bg-white/20 transition-colors ${daydream.className} text-sm md:text-base`}
+                      className={`px-3 py-1 md:px-4 md:py-2 ${betUnit === 10 ? 'bg-[#ffd700]/30' : 'bg-white/10'} text-white rounded hover:bg-[#ffd700]/20 transition-colors ${daydream.className} text-sm md:text-base`}
                       onClick={() => handleBetUnitChange(10)}
                     >
                       $10
@@ -841,7 +848,7 @@ export default function Game() {
 
                 {/* Bet Summary Section */}
                 {Object.keys(bets).length > 0 && (
-                  <div className="w-full mt-4 p-4 bg-white/10 rounded">
+                  <div className="w-full mt-4 p-4 bg-black/20 rounded border border-[#ffd700]/10">
                     <p className={`text-lg text-white mb-2 ${daydream.className}`}>Current Bets:</p>
                     <div className="flex flex-col gap-1">
                       {Object.entries(bets).map(([number, amount]) => (
