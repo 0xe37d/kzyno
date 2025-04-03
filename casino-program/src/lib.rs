@@ -1,4 +1,5 @@
 // Test comment for pre-commit hook
+// Another test comment
 mod error;
 mod instruction;
 mod state;
