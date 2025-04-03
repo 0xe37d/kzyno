@@ -53,7 +53,29 @@ export default function HorseRacing() {
       lane: 2,
       lapsCompleted: 0,
     },
+    {
+      id: 'pig',
+      name: 'Pig',
+      image: '/game/pig.webp',
+      odds: 3,
+      position: 0,
+      speed: 0.8,
+      lane: 3,
+      lapsCompleted: 0,
+    },
   ])
+
+  // Determine final race positions
+  const [finalPositions, setFinalPositions] = useState<string[]>([])
+
+  // Fisher-Yates shuffle algorithm for determining race order
+  const shuffleArray = (array: string[]) => {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[array[i], array[j]] = [array[j], array[i]]
+    }
+    return array
+  }
 
   const handleBet = (horseId: string) => {
     if (!isRacing && balance >= betAmount) {
@@ -68,6 +90,11 @@ export default function HorseRacing() {
     setIsRacing(true)
     setWinner(null)
 
+    // Determine final positions at the start
+    const shuffledHorses = shuffleArray([...horses.map((h) => h.id)])
+    console.log('Predetermined finish order:', shuffledHorses)
+    setFinalPositions(shuffledHorses)
+
     // Reset horse positions to their starting positions
     setHorses((prevHorses) =>
       prevHorses.map((horse) => ({
@@ -80,22 +107,51 @@ export default function HorseRacing() {
     const interval = setInterval(() => {
       setHorses((prevHorses) => {
         const updatedHorses = prevHorses.map((horse) => {
+          // Don't move if already completed 3 laps
+          if (horse.lapsCompleted >= 3) {
+            return horse
+          }
+
+          // Calculate overall progress (0-1)
+          const currentProgress = (horse.lapsCompleted * 100 + horse.position) / 300
+
           // Base movement amount (random between 1-2)
           const baseMove = (1 + Math.random()) / 2
 
-          // Speed affects the chance of getting a good movement roll
-          // Higher speed = higher chance of getting the maximum movement
-          const speedRoll = Math.random()
-          const moveAmount = speedRoll < horse.speed ? baseMove * 1.5 : baseMove
+          // Start adjusting speeds in the final lap
+          let speedMultiplier = 1
+          if (horse.lapsCompleted >= 2) {
+            const horseRank = shuffledHorses.indexOf(horse.id)
+            const targetProgress = (horses.length - horseRank) / horses.length
+
+            // Calculate how far behind/ahead the horse is from their target position
+            const progressDiff = targetProgress - currentProgress
+
+            // More aggressive speed adjustments
+            if (progressDiff > 0.02) {
+              // Speed up if falling behind
+              speedMultiplier = 1.5
+            } else if (progressDiff < -0.02) {
+              // Slow down if too far ahead
+              speedMultiplier = 0.5
+            }
+          }
+
+          // Reduce randomness in the final stages
+          const randomFactor =
+            horse.lapsCompleted >= 2 ? 0.95 + Math.random() * 0.1 : 0.9 + Math.random() * 0.2
+
+          const moveAmount = baseMove * speedMultiplier * randomFactor
 
           const newPosition = (horse.position + moveAmount) % 100
 
-          // Check if horse completed a lap (crossed from 99 to 0)
+          // Check if horse completed a lap
           if (horse.position > 90 && newPosition < 10) {
+            const newLapsCompleted = horse.lapsCompleted + 1
             return {
               ...horse,
               position: newPosition,
-              lapsCompleted: horse.lapsCompleted + 1,
+              lapsCompleted: newLapsCompleted,
             }
           }
 
@@ -105,18 +161,15 @@ export default function HorseRacing() {
           }
         })
 
-        // Find the current leader
-        const leader = updatedHorses.reduce((prev, current) => {
-          if (current.lapsCompleted > prev.lapsCompleted) return current
-          if (current.lapsCompleted < prev.lapsCompleted) return prev
-          return current.position > prev.position ? current : prev
-        })
+        // Find the predetermined winner
+        const winner = shuffledHorses[0]
+        const winningHorse = updatedHorses.find((h) => h.id === winner)
 
-        // If leader completed 3 laps, end the race
-        if (leader.lapsCompleted >= 3) {
-          setWinner(leader.id)
+        // End race if winner has completed 3 laps
+        if (winningHorse && winningHorse.lapsCompleted >= 3) {
+          setWinner(winner)
           setIsRacing(false)
-          if (leader.id === selectedHorse) {
+          if (winner === selectedHorse) {
             setBalance((prev) => prev + betAmount * 3)
           }
           clearInterval(interval)
@@ -127,22 +180,34 @@ export default function HorseRacing() {
     }, 50)
   }
 
-  // Get sorted horses for leaderboard
+  // Get sorted horses for leaderboard based on current race progress
   const getSortedHorses = () => {
+    if (!isRacing && winner) {
+      // After race is complete, return horses in predetermined order
+      return [...horses].sort((a, b) => {
+        const aIndex = finalPositions.indexOf(a.id)
+        const bIndex = finalPositions.indexOf(b.id)
+        return aIndex - bIndex
+      })
+    }
+
+    // During race, sort by current position
     return [...horses].sort((a, b) => {
-      if (a.lapsCompleted !== b.lapsCompleted) return b.lapsCompleted - a.lapsCompleted
+      if (a.lapsCompleted !== b.lapsCompleted) {
+        return b.lapsCompleted - a.lapsCompleted
+      }
       return b.position - a.position
     })
   }
 
   // Calculate horse position on the oval track
   const getHorsePosition = (position: number, lane: number) => {
-    const outerWidth = 400 // Width of the outer oval (increased from 300)
-    const outerHeight = 250 // Height of the outer oval (increased from 200)
+    const outerWidth = 400 // Width of the outer oval
+    const outerHeight = 250 // Height of the outer oval
 
     // Calculate lane-specific oval dimensions
-    // Each lane's oval is 10% smaller than the previous one
-    const laneScale = 1 - lane * 0.1
+    // Each lane's oval is 8% smaller than the previous one (adjusted for 4 horses)
+    const laneScale = 1 - lane * 0.08
     const width = outerWidth * laneScale
     const height = outerHeight * laneScale
 
@@ -153,7 +218,7 @@ export default function HorseRacing() {
     const spreadFactor = Math.abs(Math.cos(angle))
 
     // Adjust lane spacing based on position
-    const laneOffset = lane * 50 * spreadFactor // Increased from 40 to 50 pixels max spread between lanes
+    const laneOffset = lane * 40 * spreadFactor // Reduced from 50 to 40 pixels max spread between lanes
 
     // Calculate position on the lane's oval
     const x = width * Math.cos(angle) + laneOffset * Math.sign(Math.cos(angle))
@@ -171,7 +236,10 @@ export default function HorseRacing() {
   return (
     <div className="min-h-screen flex flex-col bg-[#1a472a] relative overflow-hidden">
       {/* Casino-style decorative elements */}
-      <div className="absolute inset-0 bg-[url('/game/felt.jpg')] opacity-20" />
+      <div
+        className="absolute inset-0 bg-[url('/game/felt.jpg')] opacity-20"
+        style={{ backgroundRepeat: 'repeat', backgroundSize: '200px' }}
+      />
       <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent" />
 
       {/* Decorative corner elements */}
@@ -236,18 +304,23 @@ export default function HorseRacing() {
             style={{
               borderRadius: '50%',
               transform: 'scaleX(1.5)',
-              backgroundImage: 'url("/game/gravel.jpg")',
-              backgroundSize: 'cover',
+              backgroundImage: 'url("/game/dirt.png")',
+              backgroundRepeat: 'repeat',
+              backgroundSize: '50px',
               opacity: 0.8,
             }}
           />
 
           {/* Track background - inner oval (hollow center) */}
           <div
-            className="absolute inset-0 border-2 md:border-4 border-[#1a472a] bg-[#1a472a]"
+            className="absolute inset-0 border-2 md:border-4 border-[#1a472a]"
             style={{
               borderRadius: '50%',
               transform: 'scaleX(0.75) scaleY(0.5)',
+              backgroundImage: 'url("/game/grass.png")',
+              backgroundRepeat: 'repeat',
+              backgroundSize: '50px',
+              opacity: 0.8,
             }}
           />
 
