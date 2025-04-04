@@ -14,6 +14,8 @@ pub enum CasinoInstruction {
     /// 2. `[]` Token mint account
     /// 3. `[writable]` Reserve token account
     /// 4. `[writable]` Vault account
+    /// 5. `[]` System program
+    /// 6. `[]` Token program
     Initialize {
         total_token_supply: u64,
     },
@@ -27,6 +29,9 @@ pub enum CasinoInstruction {
     /// 3. `[writable]` Vault account
     /// 4. `[writable]` Global state account
     /// 5. `[]` Token program
+    /// 6. `[]` System program
+    /// 7. `[]` Reserve authority PDA
+    /// 8. `[]` Token mint account
     Deposit {
         amount: u64,
     },
@@ -40,6 +45,7 @@ pub enum CasinoInstruction {
     /// 3. `[writable]` Vault account
     /// 4. `[writable]` Global state account
     /// 5. `[]` Token program
+    /// 6. `[]` System program
     BurnAndWithdraw {
         amount: u64,
     },
@@ -50,6 +56,7 @@ pub enum CasinoInstruction {
     /// 0. `[signer]` User account
     /// 1. `[writable]` Vault account
     /// 2. `[writable]` Global state account
+    /// 3. `[]` System program
     PlayGame {
         bet_amount: u64,
         multiplier: u64,

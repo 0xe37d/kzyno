@@ -32,6 +32,14 @@ const games: GameCard[] = [
     isAvailable: true,
   },
   {
+    id: 'casino-test',
+    title: 'Casino Test',
+    description: 'Test the Solana casino contract functionality',
+    image: '/game/roulette.png',
+    path: '/casino-test',
+    isAvailable: true,
+  },
+  {
     id: 'blackjack',
     title: 'Blackjack',
     description: 'Coming soon...',

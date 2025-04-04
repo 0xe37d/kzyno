@@ -2,6 +2,7 @@ import React from 'react'
 import { hyperlegible } from './fonts'
 import './globals.css'
 import type { Metadata } from 'next'
+import { WalletProvider } from './providers/WalletProvider'
 
 export const metadata: Metadata = {
   title: 'kzyno',
@@ -40,7 +41,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${hyperlegible.className} antialiased`}>{children}</body>
+      <body className={`${hyperlegible.className} antialiased`}>
+        <WalletProvider>{children}</WalletProvider>
+      </body>
     </html>
   )
 }

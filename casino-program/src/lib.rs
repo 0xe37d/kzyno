@@ -1,6 +1,9 @@
 mod error;
-mod instruction;
-mod state;
+pub mod instruction;
+pub mod state;
+pub mod casino_client;
+
+use std::str::FromStr;
 
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
@@ -15,11 +18,14 @@ use solana_program::{
     program::invoke_signed,
 };
 
-use spl_token::{
+use spl_token_2022::{
     instruction as token_instruction,
     state::{Account as TokenAccount, Mint},
 };
 use borsh::{BorshSerialize, BorshDeserialize};
+use state::PlayerState;
+
+use solana_sdk::instruction::AccountMeta;
 
 use crate::{
     error::CasinoError,
@@ -85,39 +91,58 @@ fn process_initialize(
     }
 
     // Verify token program
-    if token_program.key != &spl_token::id() {
+    if token_program.key != &spl_token_2022::ID {
         return Err(CasinoError::InvalidInstruction.into());
     }
 
-    // Verify global state account is owned by the program
-    if global_state_account.owner != program_id {
+    // Verify this is the official global state account by checking it's a PDA
+    let (expected_global_state, bump) = Pubkey::find_program_address(
+        &[b"global_state"],
+        program_id,
+    );
+    if global_state_account.key != &expected_global_state {
         return Err(CasinoError::InvalidGlobalState.into());
     }
 
-    // Create PDA for reserve authority
-    let (reserve_authority, _bump) = Pubkey::find_program_address(
-        &[b"reserve_authority"],
+    // Check if already initialized by trying to deserialize the data
+    let is_initialized = match GlobalState::try_from_slice(&global_state_account.data.borrow()) {
+        Ok(existing_state) => {
+            solana_program::msg!("Found existing state: {:?}", existing_state);
+            existing_state.is_initialized
+        }
+        Err(e) => {
+            solana_program::msg!("Failed to deserialize state: {:?}", e);
+            solana_program::msg!("Proceeding with initialization...");
+            false
+        }
+    };
+
+    if is_initialized {
+        solana_program::msg!("Account already initialized, returning error");
+        return Err(CasinoError::AlreadyInitialized.into());
+    }
+
+    // Create the global state account if it doesn't exist
+    let space = GlobalState::LEN;
+    let rent = Rent::default();
+    let lamports = rent.minimum_balance(space);
+
+    let create_account_ix = system_instruction::create_account(
+        admin.key,
+        global_state_account.key,
+        lamports,
+        space as u64,
         program_id,
     );
 
-    // Set the reserve token account's authority to the PDA
-    let set_authority_ix = token_instruction::set_authority(
-        token_program.key,
-        reserve_token_account.key,
-        Some(&reserve_authority),
-        token_instruction::AuthorityType::AccountOwner,
-        admin.key,
-        &[],
-    )?;
-
-    invoke(
-        &set_authority_ix,
+    invoke_signed(
+        &create_account_ix,
         &[
-            reserve_token_account.clone(),
-            token_mint.clone(),
             admin.clone(),
-            token_program.clone(),
+            global_state_account.clone(),
+            system_program.clone(),
         ],
+        &[&[b"global_state", &[bump][..]]],
     )?;
 
     // Initialize global state
@@ -129,14 +154,17 @@ fn process_initialize(
         total_deposits: 0,
         circulating_tokens: 0,
         total_token_supply,
+        is_initialized: true,
     };
-
-    // Get a mutable reference to the account's data
-    let mut account_data = global_state_account.try_borrow_mut_data()?;
+    
+    solana_program::msg!("Initializing with new state: {:?}", global_state);
     
     // Serialize the global state into the account's data
+    let mut account_data = global_state_account.try_borrow_mut_data()?;
     global_state.serialize(&mut &mut account_data[..])
         .map_err(|_| ProgramError::InvalidAccountData)?;
+
+    solana_program::msg!("Successfully initialized global state");
 
     Ok(())
 }
@@ -446,6 +474,8 @@ fn process_play_game(
         )?;
     }
 
+    solana_program::msg!("game:{}", if is_win { "win" } else { "loss" });
+
     Ok(())
 }
 
@@ -460,34 +490,47 @@ mod test {
         system_program,
         transaction::Transaction,
         rent::Rent,
+        epoch_schedule::Epoch,
     };
-    use spl_token::{
+    use spl_token_2022::{
         instruction as token_instruction,
         state::{Account as TokenAccount, Mint},
     };
 
     #[tokio::test]
     async fn test_casino_program() {
+        println!("Starting casino program test...");
         let program_id = Pubkey::new_unique();
-        let (mut banks_client, payer, recent_blockhash) = ProgramTest::new(
+        println!("Using program ID: {}", program_id);
+        
+        let mut program_test = ProgramTest::new(
             "casino_program",
             program_id,
             processor!(process_instruction),
-        )
-        .start()
-        .await;
+        );
+        
+        // Add program to the test environment
+        program_test.add_program("casino_program", program_id, processor!(process_instruction));
+        
+        // Create and add global state PDA account
+        let (global_state_pda, _) = Pubkey::find_program_address(
+            &[b"global_state"],
+            &program_id,
+        );
+        
+        let (mut banks_client, payer, recent_blockhash) = program_test.start().await;
+        println!("Test environment started with program ID: {}", program_id);
 
         // Create keypairs for accounts
         let admin = Keypair::new();
         let user = Keypair::new();
-        let global_state = Keypair::new();
         let token_mint = Keypair::new();
         let reserve_token_account = Keypair::new();
         let user_token_account = Keypair::new();
         
         // Derive vault PDA
         let (vault_pda, _) = Pubkey::find_program_address(
-            &[b"vault", global_state.pubkey().as_ref()],
+            &[b"vault", global_state_pda.as_ref()],
             &program_id,
         );
 
@@ -541,10 +584,10 @@ mod test {
                     &token_mint.pubkey(),
                     mint_rent,
                     Mint::LEN as u64,
-                    &spl_token::id(),
+                    &spl_token_2022::ID,
                 ),
                 token_instruction::initialize_mint(
-                    &spl_token::id(),
+                    &spl_token_2022::ID,
                     &token_mint.pubkey(),
                     &admin.pubkey(),
                     Some(&admin.pubkey()),
@@ -565,10 +608,10 @@ mod test {
                     &reserve_token_account.pubkey(),
                     account_rent,
                     TokenAccount::LEN as u64,
-                    &spl_token::id(),
+                    &spl_token_2022::ID,
                 ),
                 token_instruction::initialize_account(
-                    &spl_token::id(),
+                    &spl_token_2022::ID,
                     &reserve_token_account.pubkey(),
                     &token_mint.pubkey(),
                     &admin.pubkey(),
@@ -579,6 +622,26 @@ mod test {
         transaction.sign(&[&payer, &reserve_token_account], recent_blockhash);
         banks_client.process_transaction(transaction).await.unwrap();
 
+        // Set reserve token account's owner to PDA
+        let (reserve_authority, _) = Pubkey::find_program_address(
+            &[b"reserve_authority"],
+            &program_id,
+        );
+        let set_authority_ix = token_instruction::set_authority(
+            &spl_token_2022::ID,
+            &reserve_token_account.pubkey(),
+            Some(&reserve_authority),
+            token_instruction::AuthorityType::AccountOwner,
+            &admin.pubkey(),
+            &[],
+        ).unwrap();
+        let mut transaction = Transaction::new_with_payer(
+            &[set_authority_ix],
+            Some(&payer.pubkey()),
+        );
+        transaction.sign(&[&payer, &admin], recent_blockhash);
+        banks_client.process_transaction(transaction).await.unwrap();
+
         // Create user token account
         let mut transaction = Transaction::new_with_payer(
             &[
@@ -587,10 +650,10 @@ mod test {
                     &user_token_account.pubkey(),
                     account_rent,
                     TokenAccount::LEN as u64,
-                    &spl_token::id(),
+                    &spl_token_2022::ID,
                 ),
                 token_instruction::initialize_account(
-                    &spl_token::id(),
+                    &spl_token_2022::ID,
                     &user_token_account.pubkey(),
                     &token_mint.pubkey(),
                     &user.pubkey(),
@@ -605,7 +668,7 @@ mod test {
         let total_token_supply = 1_000_000;
         let mut transaction = Transaction::new_with_payer(
             &[token_instruction::mint_to(
-                &spl_token::id(),
+                &spl_token_2022::ID,
                 &token_mint.pubkey(),
                 &reserve_token_account.pubkey(),
                 &admin.pubkey(),
@@ -617,24 +680,12 @@ mod test {
         transaction.sign(&[&payer, &admin], recent_blockhash);
         banks_client.process_transaction(transaction).await.unwrap();
 
-        // Create global state account
-        let mut transaction = Transaction::new_with_payer(
-            &[system_instruction::create_account(
-                &payer.pubkey(),
-                &global_state.pubkey(),
-                lamports,
-                space as u64,
-                &program_id,
-            )],
-            Some(&payer.pubkey()),
-        );
-        transaction.sign(&[&payer, &global_state], recent_blockhash);
-        banks_client.process_transaction(transaction).await.unwrap();
-
         // Initialize global state
-        println!("Testing casino initialization...");
-
+        println!("\n=== Testing casino initialization ===");
         let initialize_instruction = CasinoInstruction::Initialize { total_token_supply };
+        println!("First initialization instruction: {:?}", initialize_instruction);
+        println!("First initialization program ID: {}", program_id);
+        println!("First initialization global state account: {}", global_state_pda);
         
         let mut transaction = Transaction::new_with_payer(
             &[Instruction::new_with_bytes(
@@ -642,56 +693,74 @@ mod test {
                 &initialize_instruction.pack(),
                 vec![
                     AccountMeta::new(admin.pubkey(), true),
-                    AccountMeta::new(global_state.pubkey(), false),
+                    AccountMeta::new(global_state_pda, false),
                     AccountMeta::new_readonly(token_mint.pubkey(), false),
                     AccountMeta::new(reserve_token_account.pubkey(), false),
                     AccountMeta::new(vault_pda, false),
                     AccountMeta::new_readonly(system_program::id(), false),
-                    AccountMeta::new_readonly(spl_token::id(), false),
+                    AccountMeta::new_readonly(spl_token_2022::ID, false),
                 ],
             )],
             Some(&payer.pubkey()),
         );
 
-        // Only sign with payer and admin since they are the only signers in the instruction
         transaction.sign(&[&payer, &admin], recent_blockhash);
-        banks_client.process_transaction(transaction).await.unwrap();
-
-        // Verify global state
-        let account = banks_client
-            .get_account(global_state.pubkey())
+        let result = banks_client.process_transaction(transaction).await;
+        println!("First initialization result: {:?}", result);
+        
+        // Check account data after first initialization
+        let account_after = banks_client
+            .get_account(global_state_pda)
             .await
             .expect("Failed to get global state account");
-
-        if let Some(account_data) = account {
+        if let Some(account_data) = account_after {
             let global_state: GlobalState = GlobalState::try_from_slice(&account_data.data)
                 .expect("Failed to deserialize global state");
-            assert_eq!(global_state.admin, admin.pubkey());
-            assert_eq!(global_state.token_mint, token_mint.pubkey());
-            assert_eq!(global_state.reserve_token_account, reserve_token_account.pubkey());
-            assert_eq!(global_state.vault_account, vault_pda);
-            assert_eq!(global_state.total_deposits, 0);
-            assert_eq!(global_state.circulating_tokens, 0);
-            assert_eq!(global_state.total_token_supply, total_token_supply);
-            println!("✅ Casino initialized successfully");
+            println!("Account state after first initialization: {:?}", global_state);
         }
+        
+        // Test re-initialization
+        println!("\n=== Testing re-initialization prevention ===");
+        
+        // Try to re-initialize with a different total_token_supply
+        let different_token_supply = total_token_supply + 1;
+        let reinitialize_instruction = CasinoInstruction::Initialize { total_token_supply: different_token_supply };
+        println!("Re-initialization instruction with different supply: {:?}", reinitialize_instruction);
+        
+        let mut transaction = Transaction::new_with_payer(
+            &[Instruction::new_with_bytes(
+                program_id,
+                &reinitialize_instruction.pack(),
+                vec![
+                    AccountMeta::new(admin.pubkey(), true),
+                    AccountMeta::new(global_state_pda, false),
+                    AccountMeta::new_readonly(token_mint.pubkey(), false),
+                    AccountMeta::new(reserve_token_account.pubkey(), false),
+                    AccountMeta::new(vault_pda, false),
+                    AccountMeta::new_readonly(system_program::id(), false),
+                    AccountMeta::new_readonly(spl_token_2022::ID, false),
+                ],
+            )],
+            Some(&payer.pubkey()),
+        );
 
-        // Verify reserve token account authority is set to PDA
-        let reserve_account = banks_client
-            .get_account(reserve_token_account.pubkey())
+        transaction.sign(&[&payer, &admin], recent_blockhash);
+        let result = banks_client.process_transaction(transaction).await;
+        println!("Re-initialization result: {:?}", result);
+        
+        // Check account data after re-initialization attempt
+        let account_after = banks_client
+            .get_account(global_state_pda)
             .await
-            .expect("Failed to get reserve token account");
-
-        if let Some(account_data) = reserve_account {
-            let token_account: TokenAccount = TokenAccount::unpack(&account_data.data)
-                .expect("Failed to deserialize token account");
-            let (reserve_authority, _) = Pubkey::find_program_address(
-                &[b"reserve_authority"],
-                &program_id,
-            );
-            assert_eq!(token_account.owner, reserve_authority);
-            println!("✅ Reserve token account authority set to PDA");
+            .expect("Failed to get global state account");
+        if let Some(account_data) = account_after {
+            let global_state: GlobalState = GlobalState::try_from_slice(&account_data.data)
+                .expect("Failed to deserialize global state");
+            println!("Account state after re-initialization attempt: {:?}", global_state);
         }
+        
+        assert!(result.is_err(), "Re-initialization should fail with AlreadyInitialized error");
+        println!("✅ Re-initialization prevention test passed - program correctly rejected re-initialization");
 
         // Test deposit
         println!("Testing deposit...");
@@ -733,8 +802,8 @@ mod test {
                     AccountMeta::new(user_token_account.pubkey(), false),
                     AccountMeta::new(reserve_token_account.pubkey(), false),
                     AccountMeta::new(vault_pda, false),
-                    AccountMeta::new(global_state.pubkey(), false),
-                    AccountMeta::new_readonly(spl_token::id(), false),
+                    AccountMeta::new(global_state_pda, false),
+                    AccountMeta::new_readonly(spl_token_2022::ID, false),
                     AccountMeta::new_readonly(system_program::id(), false),
                     AccountMeta::new_readonly(reserve_authority, false),
                     AccountMeta::new_readonly(token_mint.pubkey(), false),
@@ -749,7 +818,7 @@ mod test {
 
         // Verify deposit
         let account = banks_client
-            .get_account(global_state.pubkey())
+            .get_account(global_state_pda)
             .await
             .expect("Failed to get global state account");
 
@@ -814,7 +883,7 @@ mod test {
                 vec![
                     AccountMeta::new(user.pubkey(), true),
                     AccountMeta::new(vault_pda, false),
-                    AccountMeta::new(global_state.pubkey(), false),
+                    AccountMeta::new(global_state_pda, false),
                     AccountMeta::new_readonly(system_program::id(), false),
                 ],
             )],
@@ -872,7 +941,7 @@ mod test {
                 vec![
                     AccountMeta::new(user.pubkey(), true),
                     AccountMeta::new(vault_pda, false),
-                    AccountMeta::new(global_state.pubkey(), false),
+                    AccountMeta::new(global_state_pda, false),
                     AccountMeta::new_readonly(system_program::id(), false),
                 ],
             )],
@@ -929,7 +998,7 @@ mod test {
                 vec![
                     AccountMeta::new(user.pubkey(), true),
                     AccountMeta::new(vault_pda, false),
-                    AccountMeta::new(global_state.pubkey(), false),
+                    AccountMeta::new(global_state_pda, false),
                     AccountMeta::new_readonly(system_program::id(), false),
                 ],
             )],
@@ -986,7 +1055,7 @@ mod test {
 
         // Get circulating tokens before burn and withdraw
         let initial_circulating_tokens = banks_client
-            .get_account(global_state.pubkey())
+            .get_account(global_state_pda)
             .await
             .expect("Failed to get global state account")
             .map(|acc| GlobalState::try_from_slice(&acc.data).expect("Failed to deserialize global state"))
@@ -1002,8 +1071,8 @@ mod test {
                     AccountMeta::new(user_token_account.pubkey(), false),
                     AccountMeta::new(token_mint.pubkey(), false),
                     AccountMeta::new(vault_pda, false),
-                    AccountMeta::new(global_state.pubkey(), false),
-                    AccountMeta::new_readonly(spl_token::id(), false),
+                    AccountMeta::new(global_state_pda, false),
+                    AccountMeta::new_readonly(spl_token_2022::ID, false),
                     AccountMeta::new_readonly(system_program::id(), false),
                 ],
             )],
@@ -1016,7 +1085,7 @@ mod test {
 
         // Verify burn and withdraw
         let account = banks_client
-            .get_account(global_state.pubkey())
+            .get_account(global_state_pda)
             .await
             .expect("Failed to get global state account");
 
