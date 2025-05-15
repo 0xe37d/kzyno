@@ -2,53 +2,19 @@ use anchor_lang::prelude::*;
 use anchor_lang::system_program::{transfer, Transfer};
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token_interface::{self, Mint, TokenAccount, TokenInterface, TransferChecked},
+    token_interface::{self, Burn, Mint, TokenAccount, TokenInterface, TransferChecked},
 };
-use switchboard_on_demand::randomness::RandomnessAccountData;
 
-declare_id!("93in8j7MghiE1oEDWC7eeMj71Mn93SdCgmifr2SYii8R");
-
-pub fn randomness_transfer<'a>(
-    system_program: AccountInfo<'a>,
-    from: AccountInfo<'a>,
-    to: AccountInfo<'a>,
-    amount: u64,
-    seeds: Option<&[&[&[u8]]]>, // Use Option to explicitly handle the presence or absence of seeds
-) -> Result<()> {
-    let amount_needed = amount;
-    if amount_needed > from.lamports() {
-        msg!(
-            "Need {} lamports, but only have {}",
-            amount_needed,
-            from.lamports()
-        );
-        return Err(ErrorCode::NotEnoughFundsToPlay.into());
-    }
-
-    let transfer_accounts = anchor_lang::system_program::Transfer {
-        from: from.to_account_info(),
-        to: to.to_account_info(),
-    };
-
-    let transfer_ctx = match seeds {
-        Some(seeds) => CpiContext::new_with_signer(system_program, transfer_accounts, seeds),
-        None => CpiContext::new(system_program, transfer_accounts),
-    };
-
-    anchor_lang::system_program::transfer(transfer_ctx, amount)
-}
+declare_id!("Har3kPZU49yuvD7etW76fMcj3AW83Q1TbRkz1Y9RjCdv");
 
 #[program]
 mod kzyno {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>, total_token_supply: u64) -> Result<()> {
+    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
         let global_state = &mut ctx.accounts.global_state;
         global_state.admin = *ctx.accounts.admin.key;
         global_state.token_mint = ctx.accounts.token_mint.key();
-        global_state.total_deposits = 0;
-        global_state.circulating_tokens = 0;
-        global_state.total_token_supply = total_token_supply;
 
         Ok(())
     }
@@ -64,16 +30,6 @@ mod kzyno {
         );
 
         transfer(cpi_context, amount)?;
-
-        msg!(
-            "Reserve vault token balance: {}",
-            ctx.accounts.reserve_token_vault.amount
-        );
-        msg!(
-            "User token account: {}",
-            ctx.accounts.user_token_account.key()
-        );
-        msg!("Attempting transfer of {}", amount);
 
         // Transfer kzyno token from the reserve token account to the user token account
         let signer_seeds: &[&[&[u8]]] = &[&[b"reserve_authority", &[ctx.bumps.reserve_authority]]];
@@ -92,8 +48,14 @@ mod kzyno {
 
         // Update the global state
         let global_state = &mut ctx.accounts.global_state;
-        global_state.total_deposits += amount;
-        global_state.circulating_tokens += amount;
+        global_state.circulating_tokens = global_state
+            .circulating_tokens
+            .checked_add(amount)
+            .ok_or(ErrorCode::Overflow)?;
+        global_state.deposits = global_state
+            .deposits
+            .checked_add(amount)
+            .ok_or(ErrorCode::Overflow)?;
 
         Ok(())
     }
@@ -103,6 +65,13 @@ mod kzyno {
         let user_balance = &mut ctx.accounts.user_balance;
         user_balance.balance = user_balance
             .balance
+            .checked_add(amount)
+            .ok_or(ErrorCode::Overflow)?;
+
+        // Update the user funds in global state
+        let global_state = &mut ctx.accounts.global_state;
+        global_state.user_funds = global_state
+            .user_funds
             .checked_add(amount)
             .ok_or(ErrorCode::Overflow)?;
 
@@ -120,121 +89,164 @@ mod kzyno {
         Ok(())
     }
 
-    // Flip the coin; only callable by the allowed user
-    pub fn coin_flip(
-        ctx: Context<CoinFlip>,
-        randomness_account: Pubkey,
-        guess: bool,
+    pub fn play_game(
+        ctx: Context<PlayGame>,
+        chance: u64,
+        random_number: u64,
+        wager: u64,
     ) -> Result<()> {
-        let clock = Clock::get()?;
-        let player_state = &mut ctx.accounts.player_state;
-        // Record the user's guess
-        player_state.current_guess = guess;
-        let randomness_data =
-            RandomnessAccountData::parse(ctx.accounts.randomness_account_data.data.borrow())
-                .unwrap();
-
-        if randomness_data.seed_slot != clock.slot - 1 {
-            msg!("seed_slot: {}", randomness_data.seed_slot);
-            msg!("slot: {}", clock.slot);
-            return Err(ErrorCode::RandomnessAlreadyRevealed.into());
+        // Only admin can call play game
+        if ctx.accounts.signer.key() != ctx.accounts.global_state.admin {
+            return Err(ErrorCode::Unauthorized.into());
         }
-        // Track the player's commited values so you know they don't request randomness
-        // multiple times.
-        player_state.commit_slot = randomness_data.seed_slot;
 
-        // ***
-        // IMPORTANT: Remember, in Switchboard Randomness, it's the responsibility of the caller to reveal the randomness.
-        // Therefore, the game collateral MUST be taken upon randomness request, not on reveal.
-        // ***
-        randomness_transfer(
-            ctx.accounts.system_program.to_account_info(),
-            ctx.accounts.user.to_account_info(), // Include the user_account
-            ctx.accounts.escrow_account.to_account_info(),
-            player_state.wager,
-            None,
-        )?;
+        if ctx.accounts.user_balance.balance < wager {
+            return Err(ErrorCode::NotEnoughFundsToPlay.into());
+        }
 
-        // Store flip commit
-        player_state.randomness_account = randomness_account;
+        // Chance must be between 2 and 50
+        if chance < 2 || chance > 50 {
+            return Err(ErrorCode::InvalidChance.into());
+        }
 
-        // Log the result
-        msg!("Coin flip initiated, randomness requested.");
+        // The casino has a 1/53 edge. the number 53 is intentionally chosen to be prime,
+        // so as to make the casino edge calculation independent of the user's chosen chance.
+        let casino_wins_anyway = random_number % 53 == 0;
+        let player_wins = random_number % chance == 0 && !casino_wins_anyway;
+
+        let user_balance = &mut ctx.accounts.user_balance;
+        let global_state = &mut ctx.accounts.global_state;
+        if player_wins {
+            user_balance.balance = user_balance
+                .balance
+                .checked_add(wager)
+                .ok_or(ErrorCode::Overflow)?;
+            global_state.user_funds = global_state
+                .user_funds
+                .checked_add(wager)
+                .ok_or(ErrorCode::Overflow)?;
+            emit_cpi!(PlayResult { won: true })
+        } else {
+            user_balance.balance = user_balance
+                .balance
+                .checked_sub(wager)
+                .ok_or(ErrorCode::Overflow)?;
+            global_state.user_funds = global_state
+                .user_funds
+                .checked_sub(wager)
+                .ok_or(ErrorCode::Overflow)?;
+            emit_cpi!(PlayResult { won: false })
+        }
+
         Ok(())
     }
 
-    pub fn settle_flip(ctx: Context<SettleFlip>, escrow_bump: u8) -> Result<()> {
-        let clock: Clock = Clock::get()?;
-        let player_state = &mut ctx.accounts.player_state;
-
-        // Verify that the provided randomness account matches the stored one
-        if ctx.accounts.randomness_account_data.key() != player_state.randomness_account {
-            return Err(ErrorCode::InvalidRandomnessAccount.into());
+    pub fn withdraw_funds(ctx: Context<WithdrawFunds>, amount: u64) -> Result<()> {
+        if ctx.accounts.user_balance.balance < amount {
+            return Err(ErrorCode::NotEnoughFunds.into());
         }
 
-        // call the switchboard on-demand parse function to get the randomness data
-        let randomness_data =
-            RandomnessAccountData::parse(ctx.accounts.randomness_account_data.data.borrow())
-                .unwrap();
-        if randomness_data.seed_slot != player_state.commit_slot {
-            return Err(ErrorCode::RandomnessExpired.into());
+        let vault_seeds: &[&[u8]] = &[
+            b"vault",                   // the static seed
+            &[ctx.bumps.vault_account], // the bump
+        ];
+        let signer_seeds: &[&[&[u8]]] = &[vault_seeds]; // slice-of-slices
+
+        let cpi_accounts = Transfer {
+            from: ctx.accounts.vault_account.to_account_info(),
+            to: ctx.accounts.user.to_account_info(),
+        };
+
+        let cpi_ctx = CpiContext::new_with_signer(
+            ctx.accounts.system_program.to_account_info(),
+            cpi_accounts,
+            signer_seeds,
+        );
+
+        transfer(cpi_ctx, amount)?;
+        let global_state = &mut ctx.accounts.global_state;
+        global_state.user_funds = global_state
+            .user_funds
+            .checked_sub(amount)
+            .ok_or(ErrorCode::Overflow)?;
+
+        Ok(())
+    }
+
+    pub fn withdraw_liquidity(ctx: Context<WithdrawReserveLiquidity>, amount: u64) -> Result<()> {
+        // Verify proper token mint
+        if ctx.accounts.token_mint.key() != ctx.accounts.global_state.token_mint {
+            return Err(ErrorCode::IncorrectTokenMint.into());
         }
-        // call the switchboard on-demand get_value function to get the revealed random value
-        let revealed_random_value = randomness_data
-            .get_value(&clock)
-            .map_err(|_| ErrorCode::RandomnessNotResolved)?;
 
-        // Use the revealed random value to determine the flip results
-        let randomness_result = revealed_random_value[0] % 2 == 0;
+        let cpi_accounts = Burn {
+            mint: ctx.accounts.token_mint.to_account_info(),
+            from: ctx.accounts.user_token_account.to_account_info(),
+            authority: ctx.accounts.signer.to_account_info(),
+        };
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
 
-        // Update and log the result
-        player_state.latest_flip_result = randomness_result;
+        // Burn the fkn token!
+        token_interface::burn(cpi_context, amount)?;
 
-        let seed_prefix = b"stateEscrow".as_ref();
-        let escrow_seed = &[&seed_prefix[..], &[escrow_bump]];
-        let seeds_slice: &[&[u8]] = escrow_seed;
-        let binding = [seeds_slice];
-        let seeds: Option<&[&[&[u8]]]> = Some(&binding);
+        let global_state = &mut ctx.accounts.global_state;
+        global_state.deposits = global_state
+            .deposits
+            .checked_sub(amount)
+            .ok_or(ErrorCode::Overflow)?;
+        // Calculate what fraction of circulating kzyno tokens they own
+        let fraction = global_state
+            .circulating_tokens
+            .checked_div(amount)
+            .ok_or(ErrorCode::Overflow)?;
 
-        if randomness_result {
-            msg!("FLIP_RESULT: Heads");
-        } else {
-            msg!("FLIP_RESULT: Tails");
-        }
-        if randomness_result == player_state.current_guess {
-            msg!("You win!");
-            let rent = Rent::get()?;
-            let needed_lamports = player_state.wager * 2
-                + rent.minimum_balance(ctx.accounts.escrow_account.data_len());
-            if needed_lamports > ctx.accounts.escrow_account.lamports() {
-                msg!("Not enough funds in treasury to pay out the user. Please try again later");
-            } else {
-                randomness_transfer(
-                    ctx.accounts.system_program.to_account_info(),
-                    ctx.accounts.escrow_account.to_account_info(), // Transfer from the escrow
-                    ctx.accounts.user.to_account_info(),           // Payout to the user's wallet
-                    player_state.wager * 2, // If the player wins, they get double their wager if the escrow account has enough funds
-                    seeds,                  // Include seeds
-                )?;
-            }
-        } else {
-            // On lose, we keep the user's initial colletaral and they are
-            // allowed to play again.
-            msg!("You lose!");
-        }
+        // Calculate the current bankroll + profits: amount in vault - amount that is user credit / funds
+        let bankroll_plus_profits = ctx
+            .accounts
+            .vault_account
+            .lamports()
+            .checked_sub(global_state.user_funds)
+            .ok_or(ErrorCode::Overflow)?;
+
+        // They are entitled to that fraction of the bankroll + profits
+        let dues = bankroll_plus_profits
+            .checked_div(fraction)
+            .ok_or(ErrorCode::Overflow)?;
+
+        // Send the money
+        let vault_seeds: &[&[u8]] = &[
+            b"vault",                   // the static seed
+            &[ctx.bumps.vault_account], // the bump
+        ];
+        let signer_seeds: &[&[&[u8]]] = &[vault_seeds]; // slice-of-slices
+        let cpi_accounts = Transfer {
+            from: ctx.accounts.vault_account.to_account_info(),
+            to: ctx.accounts.signer.to_account_info(),
+        };
+        let cpi_ctx = CpiContext::new_with_signer(
+            ctx.accounts.system_program.to_account_info(),
+            cpi_accounts,
+            signer_seeds,
+        );
+
+        transfer(cpi_ctx, dues)?;
+
+        // Update the global state
+        global_state.circulating_tokens -= amount;
 
         Ok(())
     }
 }
 
 #[derive(Accounts)]
-#[instruction(total_token_supply: u64)]
+#[instruction()]
 pub struct Initialize<'info> {
     #[account(mut, signer)]
     pub admin: Signer<'info>,
 
     #[account(
-        init,
+        init_if_needed,
         payer = admin,
         space = 8 + // account_discriminator: u64
                     std::mem::size_of::<GlobalState>(),
@@ -244,7 +256,7 @@ pub struct Initialize<'info> {
     pub global_state: Account<'info, GlobalState>,
 
     #[account(
-        init,
+        init_if_needed,
         payer = admin,
         token::mint = token_mint,
         token::authority = reserve_authority,
@@ -254,7 +266,7 @@ pub struct Initialize<'info> {
     )]
     pub reserve_token_vault: InterfaceAccount<'info, TokenAccount>,
     #[account(
-        init,
+        init_if_needed,
         payer = admin,
         space = 0,
         seeds = [b"reserve_authority"],
@@ -280,13 +292,18 @@ pub struct DepositLiquidity<'info> {
     )]
     pub vault_account: SystemAccount<'info>,
 
-    #[account(mut)]
+    #[account(
+        mut,
+        seeds = [b"global_state"], 
+        bump
+    )]
     pub global_state: Account<'info, GlobalState>,
 
     #[account(mut)]
     pub token_mint: InterfaceAccount<'info, Mint>,
     #[account(
-        mut,
+        init_if_needed,
+        payer = signer,
         associated_token::mint = token_mint,
         associated_token::authority = signer,
         associated_token::token_program = token_program,
@@ -329,8 +346,19 @@ pub struct DepositFunds<'info> {
     )]
     pub user_balance: Account<'info, UserBalance>,
 
-    #[account(mut)]
+    #[account(
+        mut,
+        seeds = [b"vault"],
+        bump
+    )]
     pub vault_account: SystemAccount<'info>, // Receiving account
+
+    #[account(
+        mut,
+        seeds = [b"global_state"], 
+        bump
+    )]
+    pub global_state: Account<'info, GlobalState>,
 
     pub system_program: Program<'info, System>,
 }
@@ -339,16 +367,15 @@ pub struct DepositFunds<'info> {
 pub struct GlobalState {
     pub admin: Pubkey,
     pub token_mint: Pubkey,
-    pub total_deposits: u64,
     pub circulating_tokens: u64,
-    pub total_token_supply: u64,
+    pub user_funds: u64,
+    pub deposits: u64,
 }
 
 #[account]
 pub struct UserBalance {
-    pub authority: Pubkey, // The user
-    pub balance: u64,      // Custom token/game balance
-    pub bump: u8,          // For PDA verification
+    pub balance: u64, // Game balance
+    pub bump: u8,     // For PDA verification
 }
 
 #[account]
@@ -362,33 +389,104 @@ pub struct PlayerState {
     commit_slot: u64, // The slot at which the randomness was committed
 }
 
+#[event_cpi]
 #[derive(Accounts)]
-pub struct CoinFlip<'info> {
-    #[account(mut,
-        seeds = [b"playerState".as_ref(), user.key().as_ref()],
-        bump = player_state.bump)]
-    pub player_state: Account<'info, PlayerState>,
-    pub user: Signer<'info>,
-    /// CHECK: The account's data is validated manually within the handler.
-    pub randomness_account_data: AccountInfo<'info>,
-    /// CHECK: This is a simple Solana account holding SOL.
-    #[account(mut, seeds = [b"stateEscrow".as_ref()], bump)]
-    pub escrow_account: AccountInfo<'info>,
+#[instruction(chance: u64, random_number: u64, wager: u64)]
+pub struct PlayGame<'info> {
+    #[account(mut)]
+    pub signer: Signer<'info>,
+    #[account(
+        mut,
+        seeds = [b"user_balance", user.key().as_ref()],
+        bump,
+    )]
+    pub user_balance: Account<'info, UserBalance>,
+    #[account(
+        mut,
+        seeds = [b"global_state"],
+        bump
+    )]
+    pub global_state: Account<'info, GlobalState>,
+
+    #[account(mut)]
+    pub user: SystemAccount<'info>,
     pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
-pub struct SettleFlip<'info> {
-    #[account(mut,
-        seeds = [b"playerState".as_ref(), user.key().as_ref()],
-        bump = player_state.bump)]
-    pub player_state: Account<'info, PlayerState>,
-    /// CHECK: The account's data is validated manually within the handler.
-    pub randomness_account_data: AccountInfo<'info>,
-    /// CHECK: This is a simple Solana account holding SOL.
-    #[account(mut, seeds = [b"stateEscrow".as_ref()], bump )]
-    pub escrow_account: AccountInfo<'info>,
+#[instruction(chance: u64)]
+pub struct WithdrawFunds<'info> {
+    #[account(mut)]
     pub user: Signer<'info>,
+    #[account(
+        mut,
+        seeds = [b"user_balance", user.key().as_ref()],
+        bump,
+    )]
+    pub user_balance: Account<'info, UserBalance>,
+    #[account(
+        mut,
+        seeds = [b"vault"],
+        bump
+    )]
+    pub vault_account: SystemAccount<'info>,
+
+    #[account(
+        mut,
+        seeds = [b"global_state"], 
+        bump
+    )]
+    pub global_state: Account<'info, GlobalState>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+#[instruction(amount: u64)]
+pub struct WithdrawReserveLiquidity<'info> {
+    #[account(mut)]
+    pub signer: Signer<'info>,
+    #[account(
+        mut,
+        seeds = [b"vault"],
+        bump
+    )]
+    pub vault_account: SystemAccount<'info>,
+
+    #[account(
+        mut,
+        seeds = [b"global_state"], 
+        bump
+    )]
+    pub global_state: Account<'info, GlobalState>,
+
+    #[account(mut)]
+    pub token_mint: InterfaceAccount<'info, Mint>,
+    #[account(
+        mut,
+        associated_token::mint = token_mint,
+        associated_token::authority = signer,
+        associated_token::token_program = token_program,
+    )]
+    pub user_token_account: InterfaceAccount<'info, TokenAccount>,
+
+    #[account(
+        mut,
+        token::mint = token_mint,
+        token::authority = reserve_authority,
+        token::token_program = token_program,
+        seeds = [b"reserve_token_vault"],
+        bump
+    )]
+    pub reserve_token_vault: InterfaceAccount<'info, TokenAccount>,
+    #[account(
+        seeds = [b"reserve_authority"],
+        bump,
+    )]
+    /// CHECK: Only used as token account authority
+    pub reserve_authority: UncheckedAccount<'info>,
+
+    pub token_program: Interface<'info, TokenInterface>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
 }
 
@@ -399,9 +497,18 @@ pub enum ErrorCode {
     Unauthorized,
     GameStillActive,
     NotEnoughFundsToPlay,
+    NotEnoughFunds,
+    IncorrectTokenMint,
     RandomnessAlreadyRevealed,
     RandomnessNotResolved,
     RandomnessExpired,
+    InvalidChance,
     InvalidRandomnessAccount,
     Overflow,
+}
+
+// === Events ===
+#[event]
+pub struct PlayResult {
+    pub won: bool,
 }

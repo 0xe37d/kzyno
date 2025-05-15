@@ -1,0 +1,1013 @@
+{
+  "address": "Har3kPZU49yuvD7etW76fMcj3AW83Q1TbRkz1Y9RjCdv",
+  "metadata": {
+    "name": "kzyno",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "deposit_funds",
+      "discriminator": [
+        202,
+        39,
+        52,
+        211,
+        53,
+        20,
+        250,
+        88
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "user_balance",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114,
+                  95,
+                  98,
+                  97,
+                  108,
+                  97,
+                  110,
+                  99,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "signer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "global_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "deposit_liquidity",
+      "discriminator": [
+        245,
+        99,
+        59,
+        25,
+        151,
+        71,
+        233,
+        249
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "global_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_mint",
+          "writable": true
+        },
+        {
+          "name": "user_token_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "signer"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "reserve_token_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101,
+                  95,
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserve_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initialize",
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "global_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserve_token_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101,
+                  95,
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserve_authority",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_mint"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "play_game",
+      "discriminator": [
+        37,
+        88,
+        207,
+        85,
+        42,
+        144,
+        122,
+        197
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "user_balance",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114,
+                  95,
+                  98,
+                  97,
+                  108,
+                  97,
+                  110,
+                  99,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "global_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "user",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "event_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  95,
+                  95,
+                  101,
+                  118,
+                  101,
+                  110,
+                  116,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": [
+        {
+          "name": "chance",
+          "type": "u64"
+        },
+        {
+          "name": "random_number",
+          "type": "u64"
+        },
+        {
+          "name": "wager",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "withdraw_funds",
+      "discriminator": [
+        241,
+        36,
+        29,
+        111,
+        208,
+        31,
+        104,
+        217
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "user_balance",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114,
+                  95,
+                  98,
+                  97,
+                  108,
+                  97,
+                  110,
+                  99,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "global_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "withdraw_liquidity",
+      "discriminator": [
+        149,
+        158,
+        33,
+        185,
+        47,
+        243,
+        253,
+        31
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "vault_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "global_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  108,
+                  111,
+                  98,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_mint",
+          "writable": true
+        },
+        {
+          "name": "user_token_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "signer"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "reserve_token_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101,
+                  95,
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserve_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "GlobalState",
+      "discriminator": [
+        163,
+        46,
+        74,
+        168,
+        216,
+        123,
+        133,
+        98
+      ]
+    },
+    {
+      "name": "UserBalance",
+      "discriminator": [
+        187,
+        237,
+        208,
+        146,
+        86,
+        132,
+        29,
+        191
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "PlayResult",
+      "discriminator": [
+        248,
+        248,
+        36,
+        69,
+        205,
+        12,
+        180,
+        90
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "Unauthorized",
+      "msg": "Unauthorized access attempt."
+    },
+    {
+      "code": 6001,
+      "name": "GameStillActive"
+    },
+    {
+      "code": 6002,
+      "name": "NotEnoughFundsToPlay"
+    },
+    {
+      "code": 6003,
+      "name": "NotEnoughFunds"
+    },
+    {
+      "code": 6004,
+      "name": "IncorrectTokenMint"
+    },
+    {
+      "code": 6005,
+      "name": "RandomnessAlreadyRevealed"
+    },
+    {
+      "code": 6006,
+      "name": "RandomnessNotResolved"
+    },
+    {
+      "code": 6007,
+      "name": "RandomnessExpired"
+    },
+    {
+      "code": 6008,
+      "name": "InvalidChance"
+    },
+    {
+      "code": 6009,
+      "name": "InvalidRandomnessAccount"
+    },
+    {
+      "code": 6010,
+      "name": "Overflow"
+    }
+  ],
+  "types": [
+    {
+      "name": "GlobalState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "circulating_tokens",
+            "type": "u64"
+          },
+          {
+            "name": "user_funds",
+            "type": "u64"
+          },
+          {
+            "name": "deposits",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PlayResult",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "won",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UserBalance",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "balance",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}
