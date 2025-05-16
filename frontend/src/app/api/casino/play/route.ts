@@ -6,6 +6,8 @@ import type { Kzyno } from '@/lib/kzyno'
 
 const ADMIN_PRIVATE_KEY = process.env.ADMIN_PRIVATE_KEY
 
+export const runtime = 'edge'
+
 export async function POST(request: Request) {
   if (!ADMIN_PRIVATE_KEY) {
     throw new Error('ADMIN_PRIVATE_KEY environment variable is not set')
@@ -51,6 +53,11 @@ export async function POST(request: Request) {
       program.programId
     )
 
+    const [vaultAccountPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('vault')],
+      program.programId
+    )
+
     // Generate random seed
     const rngSeed = Math.floor(Math.random() * 10000000)
 
@@ -62,6 +69,7 @@ export async function POST(request: Request) {
         // @ts-expect-error: anchor types are dumb sometimes
         userBalance: userBalancePda,
         globalState,
+        vaultAccount: vaultAccountPda,
         user: new PublicKey(user),
         systemProgram: SystemProgram.programId,
       })

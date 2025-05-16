@@ -17,7 +17,13 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    await jwtVerify(token, new TextEncoder().encode(JWT_SECRET))
+    const { payload } = await jwtVerify(token, new TextEncoder().encode(JWT_SECRET))
+    const requestBody = await request.json().catch(() => ({}))
+
+    if (requestBody.pubkey && payload.sub !== requestBody.pubkey) {
+      return NextResponse.json({ error: 'Invalid pubkey' }, { status: 401 })
+    }
+
     return NextResponse.next()
   } catch (error) {
     console.log(error)

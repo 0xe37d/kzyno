@@ -12,6 +12,16 @@ export interface PlayResult {
   amount_change: number
 }
 
+const KOINS_PER_SOL = 170
+
+async function isAuthenticated(): Promise<boolean> {
+  const res = await fetch('/api/auth/me', {
+    method: 'GET',
+    credentials: 'include', // send cookies!
+  })
+  return res.ok // 200 = logged-in, 401 = not
+}
+
 export class CasinoClient {
   private program: Program<Kzyno>
   private connection: Connection
@@ -37,17 +47,14 @@ export class CasinoClient {
       [Buffer.from('global_state')],
       this.program.programId
     )
-
     ;[this.vaultPda] = PublicKey.findProgramAddressSync(
       [Buffer.from('vault')],
       this.program.programId
     )
-
     ;[this.reserveTokenVault] = PublicKey.findProgramAddressSync(
       [Buffer.from('reserve_token_vault')],
       this.program.programId
     )
-
     ;[this.reserveAuthority] = PublicKey.findProgramAddressSync(
       [Buffer.from('reserve_authority')],
       this.program.programId
@@ -60,6 +67,16 @@ export class CasinoClient {
         this.program.programId
       )
     }
+  }
+
+  async get_koins(): Promise<number> {
+    if (!this.provider.wallet.publicKey || !this.userBalancePda) {
+      throw new Error('Wallet not connected')
+    }
+
+    const userBalanceAccount = await this.program.account.userBalance.fetch(this.userBalancePda)
+    const sol = Number(userBalanceAccount.balance) / 1e9
+    return sol * KOINS_PER_SOL
   }
 
   async get_balance(): Promise<[number, number, number]> {
@@ -107,6 +124,10 @@ export class CasinoClient {
       throw new Error('Wallet not connected')
     }
 
+    if (await isAuthenticated()) {
+      return
+    }
+
     try {
       // Step 1: Get challenge
       const { timestamp } = await fetch('/api/auth/challenge').then((r) => r.json())
@@ -146,9 +167,26 @@ export class CasinoClient {
     }
 
     try {
-      const betLamports = Math.floor(bet * LAMPORTS_PER_SOL)
+      const betLamports = Math.floor((bet / KOINS_PER_SOL) * LAMPORTS_PER_SOL)
 
-      const response = await fetch('/api/casino/play', {
+      // Calculate max bet size
+      const globalState = await this.program.account.globalState.fetch(this.globalState)
+      const vaultAccount = await this.connection.getAccountInfo(this.vaultPda)
+
+      if (!vaultAccount) {
+        throw new Error('Vault account not found')
+      }
+
+      const risk = 100 // 1% risk
+      const casinoBalance = vaultAccount.lamports - Number(globalState.userFunds)
+      const chanceMinusOne = multiplier - 1
+      const maxBetSize = Math.floor(casinoBalance / risk / chanceMinusOne)
+
+      if (betLamports > maxBetSize) {
+        throw new Error(`Bet too big. Maximum bet size is ${maxBetSize / LAMPORTS_PER_SOL} SOL`)
+      }
+
+      const response = await fetch('/api/casino/play_game', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -182,6 +220,8 @@ export class CasinoClient {
     if (!this.provider.wallet.publicKey) {
       throw new Error('Wallet not connected')
     }
+
+    console.log(this.reserveTokenVault.toString())
 
     try {
       const userTokenAccount = await getAssociatedTokenAddress(

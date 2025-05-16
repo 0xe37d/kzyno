@@ -233,6 +233,7 @@ describe("kzyno", () => {
         // @ts-expect-error: anchor types are dumb sometimes
         userBalance: userBalancePda,
         globalState: globalStatePda,
+        vaultAccount: vaultAccountPda,
         user: user.publicKey,
         systemProgram: SystemProgram.programId,
       })

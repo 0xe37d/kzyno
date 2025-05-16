@@ -16,42 +16,34 @@ interface GameCard {
 
 const games: GameCard[] = [
   {
-    id: 'roulette',
-    title: 'Roulette',
-    description: 'Classic casino game with high stakes and big wins',
-    image: '/game/roulette.png',
-    path: '/roulette',
-    isAvailable: true,
-  },
-  {
     id: 'horse-racing',
     title: 'Horse Racing',
     description: 'Bet on your favorite horse and watch them race!',
     image: '/game/horses.png',
-    path: '/horse-racing',
+    path: '/arcade/horse-racing',
     isAvailable: true,
-  },
-  {
-    id: 'casino-test',
-    title: 'Casino Test',
-    description: 'Test the Solana casino contract functionality',
-    image: '/game/roulette.png',
-    path: '/casino-test',
-    isAvailable: true,
-  },
-  {
-    id: 'blackjack',
-    title: 'Blackjack',
-    description: 'Coming soon...',
-    image: '/game/blackjack.png',
-    path: '#',
-    isAvailable: false,
   },
   {
     id: 'slots',
     title: 'Slots',
     description: 'Coming soon...',
     image: '/game/slots.png',
+    path: '#',
+    isAvailable: false,
+  },
+  {
+    id: 'roulette',
+    title: 'Roulette',
+    description: 'Classic casino game with high stakes and big wins',
+    image: '/game/roulette.png',
+    path: '/arcade/roulette',
+    isAvailable: false,
+  },
+  {
+    id: 'blackjack',
+    title: 'Blackjack',
+    description: 'Coming soon...',
+    image: '/game/blackjack.png',
     path: '#',
     isAvailable: false,
   },
@@ -87,7 +79,9 @@ export default function Arcade() {
                     <h2 className={`text-2xl text-white mb-2 ${daydream.className}`}>
                       {game.title}
                     </h2>
-                    <p className="text-white/80 text-sm mb-4">{game.description}</p>
+                    <p className="text-white/80 text-sm mb-4 bg-black/50 p-2 rounded-lg font-bold">
+                      {game.description}
+                    </p>
                     {game.isAvailable ? (
                       <Link
                         href={game.path}

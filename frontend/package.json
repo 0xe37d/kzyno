@@ -15,7 +15,7 @@
     "@solana/wallet-adapter-react": "^0.15.36",
     "@solana/wallet-adapter-react-ui": "^0.9.36",
     "@solana/wallet-adapter-wallets": "^0.19.33",
-    "@solana/web3.js": "^1.98.0",
+    "@solana/web3.js": "^1.98.2",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/three": "^0.174.0",
     "borsh": "^2.0.0",
@@ -34,6 +34,7 @@
   "devDependencies": {
     "@coral-xyz/anchor": "^0.31.1",
     "@eslint/eslintrc": "^3",
+    "@types/bn.js": "^5.1.6",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^20",
     "@types/nodemailer": "^6.4.14",

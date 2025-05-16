@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { CasinoClient } from '@/lib/casino-client'
 import Link from 'next/link'
-import { Press_Start_2P } from 'next/font/google'
+import { daydream } from '../../fonts'
 import dynamic from 'next/dynamic'
 import { useAnchorWallet, useWallet } from '@solana/wallet-adapter-react'
 import { Connection } from '@solana/web3.js'
@@ -13,8 +13,6 @@ const WalletMultiButton = dynamic(
   () => import('@solana/wallet-adapter-react-ui').then((mod) => mod.WalletMultiButton),
   { ssr: false }
 )
-
-const pressStart2P = Press_Start_2P({ weight: '400', subsets: ['latin'] })
 
 export default function CasinoTest() {
   const [casinoClient, setCasinoClient] = useState<CasinoClient | null>(null)
@@ -216,11 +214,14 @@ export default function CasinoTest() {
     <div className="min-h-screen bg-gray-900 text-white p-8">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className={`text-3xl font-bold ${pressStart2P.className}`}>Casino Test Page</h1>
+          <h1 className={`text-3xl font-bold ${daydream.className}`}>Dashboard</h1>
           <div className="flex items-center gap-4">
             <WalletMultiButton />
-            <Link href="/arcade" className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">
-              Back to Arcade
+            <Link
+              href="/arcade"
+              className={`text-white hover:text-pink-200 transition-colors ${daydream.className} text-lg`}
+            >
+              Arcade
             </Link>
           </div>
         </div>
@@ -230,7 +231,7 @@ export default function CasinoTest() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Balance and Status Section */}
           <div className="bg-gray-800 p-6 rounded-lg">
-            <h2 className={`text-xl font-bold mb-4 ${pressStart2P.className}`}>Balance & Status</h2>
+            <h2 className={`text-xl font-bold mb-4 ${daydream.className}`}>Balance & Status</h2>
 
             <div className="mb-4">
               <p className="text-gray-300">SOL Balance: {balance[0] / 1e9} SOL</p>
@@ -256,17 +257,19 @@ export default function CasinoTest() {
 
           {/* Play Game Section */}
           <div className="bg-gray-800 p-6 rounded-lg">
-            <h2 className={`text-xl font-bold mb-4 ${pressStart2P.className}`}>Play Game</h2>
+            <h2 className={`text-xl font-bold mb-4 ${daydream.className}`}>Play Game</h2>
 
             <div className="mb-4">
-              <label className="block text-gray-300 mb-2">Bet Amount (SOL):</label>
-              <input
-                type="number"
-                value={betAmount}
-                onChange={(e) => setBetAmount(Number(e.target.value))}
-                className="w-full bg-gray-700 text-white p-2 rounded"
-                min="1"
-              />
+              <label className="block text-gray-300 mb-2">Bet Amount (170 Ⓚ = 1 SOL):</label>
+              <span>
+                <input
+                  type="number"
+                  value={betAmount}
+                  onChange={(e) => setBetAmount(Number(e.target.value))}
+                  className="w-full bg-gray-700 text-white p-2 rounded"
+                  min="1"
+                />
+              </span>
             </div>
 
             <div className="mb-4">
@@ -302,16 +305,14 @@ export default function CasinoTest() {
 
           {/* Liquidity Management Section */}
           <div className="bg-gray-800 p-6 rounded-lg">
-            <h2 className={`text-xl font-bold mb-4 ${pressStart2P.className}`}>
-              Liquidity Management
-            </h2>
-            <p className="text-gray-400 mb-4 text-sm">
+            <h2 className={`text-xl font-bold mb-4 ${daydream.className}`}>Liquidity Management</h2>
+            <p className="text-gray-400 mb-4 text-md">
               Deposit or withdraw liquidity tokens to/from the casino. These tokens are used to
-              provide liquidity to the casino.
+              provide liquidity to the casino, and they entitle you to a share of kzynos profits.
             </p>
 
             <div className="mb-4">
-              <label className="block text-gray-300 mb-2">Deposit Amount (tokens):</label>
+              <label className="block text-gray-300 mb-2">Deposit Amount (SOL):</label>
               <input
                 type="number"
                 value={depositAmount}
@@ -330,7 +331,7 @@ export default function CasinoTest() {
             </button>
 
             <div className="mb-4">
-              <label className="block text-gray-300 mb-2">Withdraw Amount (tokens):</label>
+              <label className="block text-gray-300 mb-2">Withdraw Amount ($KZYNO):</label>
               <input
                 type="number"
                 value={withdrawAmount}
@@ -345,14 +346,14 @@ export default function CasinoTest() {
               disabled={loading || !casinoClient}
               className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded disabled:opacity-50"
             >
-              {loading ? 'Processing...' : 'Withdraw Liquidity'}
+              {loading ? 'Processing...' : 'Withdraw Liquidity + Profits!'}
             </button>
           </div>
 
           {/* Casino Balance Section */}
           <div className="bg-gray-800 p-6 rounded-lg">
-            <h2 className={`text-xl font-bold mb-4 ${pressStart2P.className}`}>Casino Balance</h2>
-            <p className="text-gray-400 mb-4 text-sm">
+            <h2 className={`text-xl font-bold mb-4 ${daydream.className}`}>Casino Balance</h2>
+            <p className="text-gray-400 mb-4 text-md">
               Deposit or withdraw SOL to/from your casino balance. This balance is used for playing
               games.
             </p>

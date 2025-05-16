@@ -382,44 +382,23 @@ export type Kzyno = {
           }
         },
         {
+          name: 'vaultAccount'
+          pda: {
+            seeds: [
+              {
+                kind: 'const'
+                value: [118, 97, 117, 108, 116]
+              },
+            ]
+          }
+        },
+        {
           name: 'user'
           writable: true
         },
         {
           name: 'systemProgram'
           address: '11111111111111111111111111111111'
-        },
-        {
-          name: 'eventAuthority'
-          pda: {
-            seeds: [
-              {
-                kind: 'const'
-                value: [
-                  95,
-                  95,
-                  101,
-                  118,
-                  101,
-                  110,
-                  116,
-                  95,
-                  97,
-                  117,
-                  116,
-                  104,
-                  111,
-                  114,
-                  105,
-                  116,
-                  121,
-                ]
-              },
-            ]
-          }
-        },
-        {
-          name: 'program'
         },
       ]
       args: [
@@ -734,6 +713,10 @@ export type Kzyno = {
     {
       code: 6010
       name: 'overflow'
+    },
+    {
+      code: 6011
+      name: 'betTooBig'
     },
   ]
   types: [

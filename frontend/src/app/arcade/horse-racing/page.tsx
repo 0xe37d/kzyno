@@ -1,188 +1,203 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { daydream } from '../fonts'
+import { daydream } from '../../fonts'
 import Image from 'next/image'
+import { useCasino } from '@/contexts/CasinoContext'
+import { CasinoClient } from '@/lib/casino-client'
 
 interface Horse {
-  id: string
+  id: number
   name: string
   image: string
-  odds: number
-  position: number // 0-100 representing position around the track
-  speed: number // Individual horse speed multiplier
+  position: number // Now represents actual position in meters
+  speed: number // Now represents actual speed in m/s
   lane: number // 0-2 representing which lane the horse is in
   lapsCompleted: number // Track number of completed laps
+  winner: boolean
+  isRacing: boolean
+}
+
+export const RACE_CONSTANTS = {
+  LAPS: 3,
+  TRACK_LEN: 1000,
+
+  /* base motion ---------------------------------------------------------- */
+  V0: 180, // base pack speed
+  SIGMA_JITTER: 2.5,
+  DT: 0.1,
+
+  WINNER_BOOST: 30.0,
 }
 
 export default function HorseRacing() {
-  const [balance, setBalance] = useState(1000)
+  const { casinoClient, isConnected } = useCasino()
+  const [balance, setBalance] = useState(0)
   const [betAmount, setBetAmount] = useState(10)
-  const [selectedHorse, setSelectedHorse] = useState<string | null>(null)
-  const [isRacing, setIsRacing] = useState(false)
-  const [winner, setWinner] = useState<string | null>(null)
+  const [selectedHorse, setSelectedHorse] = useState<number | null>(null)
+  const [winner, setWinner] = useState<number | null>(null)
   const [horses, setHorses] = useState<Horse[]>([
     {
-      id: 'alien',
+      id: 0,
       name: 'Alien Horse',
       image: '/game/alien_horse.webp',
-      odds: 3,
       position: 0,
-      speed: 1.2,
+      speed: RACE_CONSTANTS.V0,
       lane: 0,
       lapsCompleted: 0,
+      winner: false,
+      isRacing: false,
     },
     {
-      id: 'evil',
+      id: 1,
       name: 'Evil Horse',
       image: '/game/evil_horse.webp',
-      odds: 3,
       position: 0,
-      speed: 0.9,
+      speed: RACE_CONSTANTS.V0,
       lane: 1,
       lapsCompleted: 0,
+      winner: false,
+      isRacing: false,
     },
     {
-      id: 'mcqueen',
+      id: 2,
       name: 'McQueen Horse',
       image: '/game/mcqueen_horse.webp',
-      odds: 3,
       position: 0,
-      speed: 1.0,
+      speed: RACE_CONSTANTS.V0,
       lane: 2,
       lapsCompleted: 0,
+      winner: false,
+      isRacing: false,
     },
     {
-      id: 'pig',
+      id: 3,
       name: 'Pig',
       image: '/game/pig.webp',
-      odds: 3,
       position: 0,
-      speed: 0.8,
+      speed: RACE_CONSTANTS.V0,
       lane: 3,
       lapsCompleted: 0,
+      winner: false,
+      isRacing: false,
     },
   ])
 
   // Determine final race positions
-  const [finalPositions, setFinalPositions] = useState<string[]>([])
+  const [finalPositions, setFinalPositions] = useState<number[]>([])
+  const raceTimer = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // Fisher-Yates shuffle algorithm for determining race order
-  const shuffleArray = (array: string[]) => {
-    for (let i = array.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      ;[array[i], array[j]] = [array[j], array[i]]
+  const fetchBalance = async (casinoClient: CasinoClient) => {
+    try {
+      const koins = await casinoClient.get_koins()
+      setBalance(koins)
+    } catch (error) {
+      console.error('Error fetching balance:', error)
     }
-    return array
   }
 
-  const handleBet = (horseId: string) => {
-    if (!isRacing && balance >= betAmount) {
-      setSelectedHorse(horseId)
+  // Add effect to fetch casino balance
+  useEffect(() => {
+    if (!casinoClient || !isConnected || horses.find((horse) => horse.isRacing)) return
+
+    fetchBalance(casinoClient)
+  }, [casinoClient, isConnected, horses])
+
+  const handleBet = async (horseId: number): Promise<number | null> => {
+    if (balance < betAmount || !casinoClient) return null
+
+    try {
+      const result = await casinoClient.play(betAmount, 4)
+      const winner = result.won
+        ? horseId
+        : horses.filter((h) => h.id !== horseId)[Math.floor(Math.random() * 3)].id
+
+      // debit only on success
       setBalance((prev) => prev - betAmount)
+      return winner
+    } catch (e) {
+      console.error('Error placing bet:', e)
+      return null
     }
   }
 
-  const startRace = () => {
-    if (!selectedHorse || isRacing) return
+  const startRace = async () => {
+    if (selectedHorse === null || !isRaceOver || !casinoClient) return
 
-    setIsRacing(true)
     setWinner(null)
 
-    // Determine final positions at the start
-    const shuffledHorses = shuffleArray([...horses.map((h) => h.id)])
-    console.log('Predetermined finish order:', shuffledHorses)
-    setFinalPositions(shuffledHorses)
+    const serverWinner = await handleBet(selectedHorse) // place bet first
+    if (serverWinner === null) {
+      return
+    }
 
-    // Reset horse positions to their starting positions
+    // Reset horse positions
     setHorses((prevHorses) =>
       prevHorses.map((horse) => ({
         ...horse,
         position: 0,
+        speed: RACE_CONSTANTS.V0,
         lapsCompleted: 0,
       }))
     )
 
-    const interval = setInterval(() => {
+    raceTimer.current = setInterval(() => {
       setHorses((prevHorses) => {
         const updatedHorses = prevHorses.map((horse) => {
-          // Don't move if already completed 3 laps
-          if (horse.lapsCompleted >= 3) {
+          // Don't update if race is finished
+          if (horse.lapsCompleted >= RACE_CONSTANTS.LAPS) {
             return horse
           }
 
-          // Calculate overall progress (0-1)
-          const currentProgress = (horse.lapsCompleted * 100 + horse.position) / 300
-
-          // Base movement amount (random between 1-2)
-          const baseMove = (1 + Math.random()) / 2
-
-          // Start adjusting speeds in the final lap
-          let speedMultiplier = 1
-          if (horse.lapsCompleted >= 2) {
-            const horseRank = shuffledHorses.indexOf(horse.id)
-            const targetProgress = (horses.length - horseRank) / horses.length
-
-            // Calculate how far behind/ahead the horse is from their target position
-            const progressDiff = targetProgress - currentProgress
-
-            // More aggressive speed adjustments
-            if (progressDiff > 0.02) {
-              // Speed up if falling behind
-              speedMultiplier = 1.5
-            } else if (progressDiff < -0.02) {
-              // Slow down if too far ahead
-              speedMultiplier = 0.5
-            }
+          // Winner's boost in final lap
+          let boost = 0
+          if (horse.id === serverWinner && horse.lapsCompleted >= 2) {
+            boost = RACE_CONSTANTS.WINNER_BOOST
           }
 
-          // Reduce randomness in the final stages
-          const randomFactor =
-            horse.lapsCompleted >= 2 ? 0.95 + Math.random() * 0.1 : 0.9 + Math.random() * 0.2
+          // Calculate new speed
+          const noise = (Math.random() - 0.5) * 2 * RACE_CONSTANTS.SIGMA_JITTER
+          const newSpeed = RACE_CONSTANTS.V0 + boost + noise
 
-          const moveAmount = baseMove * speedMultiplier * randomFactor
+          // Update position
+          const newPosition = horse.position + newSpeed * RACE_CONSTANTS.DT
 
-          const newPosition = (horse.position + moveAmount) % 100
+          // Check for lap completion
+          const newLapsCompleted = Math.floor(newPosition / RACE_CONSTANTS.TRACK_LEN)
 
-          // Check if horse completed a lap
-          if (horse.position > 90 && newPosition < 10) {
-            const newLapsCompleted = horse.lapsCompleted + 1
-            return {
-              ...horse,
-              position: newPosition,
-              lapsCompleted: newLapsCompleted,
+          // Check if race is finished
+          if (newLapsCompleted >= RACE_CONSTANTS.LAPS) {
+            // capture final order once, before stopping
+            setFinalPositions(
+              [...prevHorses].sort((a, b) => b.position - a.position).map((h) => h.id)
+            )
+
+            if (selectedHorse === serverWinner) {
+              setBalance((prev) => prev + betAmount * 3)
             }
+
+            if (raceTimer.current) clearInterval(raceTimer.current)
           }
 
           return {
             ...horse,
             position: newPosition,
+            speed: newSpeed,
+            lapsCompleted: newLapsCompleted,
+            isRacing: newLapsCompleted < RACE_CONSTANTS.LAPS,
+            winner: horse.id === serverWinner,
           }
         })
 
-        // Find the predetermined winner
-        const winner = shuffledHorses[0]
-        const winningHorse = updatedHorses.find((h) => h.id === winner)
-
-        // End race if winner has completed 3 laps
-        if (winningHorse && winningHorse.lapsCompleted >= 3) {
-          setWinner(winner)
-          setIsRacing(false)
-          if (winner === selectedHorse) {
-            setBalance((prev) => prev + betAmount * 3)
-          }
-          clearInterval(interval)
-        }
-
         return updatedHorses
       })
-    }, 50)
+    }, RACE_CONSTANTS.DT * 1000)
   }
 
   // Get sorted horses for leaderboard based on current race progress
   const getSortedHorses = () => {
-    if (!isRacing && winner) {
+    if (!isRaceOver && winner) {
       // After race is complete, return horses in predetermined order
       return [...horses].sort((a, b) => {
         const aIndex = finalPositions.indexOf(a.id)
@@ -202,6 +217,9 @@ export default function HorseRacing() {
 
   // Calculate horse position on the oval track
   const getHorsePosition = (position: number, lane: number) => {
+    // Convert position from meters to percentage (0-100)
+    const positionPercent = ((position % RACE_CONSTANTS.TRACK_LEN) / RACE_CONSTANTS.TRACK_LEN) * 100
+
     const outerWidth = 400 // Width of the outer oval
     const outerHeight = 250 // Height of the outer oval
 
@@ -211,7 +229,7 @@ export default function HorseRacing() {
     const width = outerWidth * laneScale
     const height = outerHeight * laneScale
 
-    const angle = (position / 100) * 2 * Math.PI // Convert position to angle
+    const angle = (positionPercent / 100) * 2 * Math.PI // Convert position to angle
 
     // Calculate how spread out the lanes should be based on position
     // 1 = most spread out (sides), 0 = least spread out (top/bottom)
@@ -227,10 +245,26 @@ export default function HorseRacing() {
     return { x, y }
   }
 
-  // Determine if horse should face left or right based on position
-  const shouldFaceLeft = (position: number) => {
-    // Horses face left when going clockwise (0-50) and right when going counterclockwise (50-100)
-    return position < 50
+  // Helper: progress inside current lap   (0 → 1)
+  const lapProgress = (pos: number) => (pos % RACE_CONSTANTS.TRACK_LEN) / RACE_CONSTANTS.TRACK_LEN
+
+  /**
+   * Horses face LEFT during the first half-lap (0 – 50 %)
+   * and RIGHT during the second half-lap (50 – 100 %).
+   */
+  const shouldFaceLeft = (position: number) => lapProgress(position) < 0.5
+
+  const isRaceOver = !horses.every((horse) => horse.isRacing)
+
+  // Add wallet connection check
+  if (!isConnected) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#1a472a]">
+        <h1 className={`text-2xl text-white mb-4 ${daydream.className}`}>
+          Please connect your wallet to play
+        </h1>
+      </div>
+    )
   }
 
   return (
@@ -261,7 +295,7 @@ export default function HorseRacing() {
 
       <main className="flex-1 flex flex-col items-center justify-center p-4 relative">
         {/* Leaderboard - Left Side */}
-        <div className="fixed left-4 md:left-8 top-1/4 w-48 md:w-64 bg-black/20 rounded-lg p-2 md:p-4 border border-[#ffd700]/10">
+        <div className="fixed left-4 md:left-8 top-1/4 w-48 md:w-64 bg-black/20 rounded-lg p-2 md:p-4 border border-[#ffd700]/10 z-10">
           <h2 className={`text-lg md:text-xl text-white mb-2 md:mb-4 ${daydream.className}`}>
             Leaderboard
           </h2>
@@ -270,7 +304,7 @@ export default function HorseRacing() {
               <div
                 key={horse.id}
                 className={`flex items-center gap-1 md:gap-2 p-1 md:p-2 rounded ${
-                  selectedHorse === horse.id ? 'bg-[#ffd700]/20' : 'bg-white/5'
+                  index === 0 ? 'bg-[#ffd700]/20' : 'bg-white/5'
                 }`}
               >
                 <span
@@ -353,10 +387,37 @@ export default function HorseRacing() {
         </div>
 
         {/* Winner Announcement */}
-        {winner && !isRacing && (
+        {horses.find((horse) => horse.winner && !horse.isRacing) && (
           <div className={`text-2xl md:text-4xl text-white text-center mb-4 ${daydream.className}`}>
-            {winner === selectedHorse ? (
-              <span className="text-[#ffd700]">You won ${betAmount * 3}!</span>
+            {horses.find((horse) => horse.winner)?.id === selectedHorse ? (
+              <div
+                className="fixed inset-0 flex items-center justify-center pointer-events-none z-50"
+                style={{
+                  perspective: '1000px',
+                }}
+              >
+                <div
+                  className={`text-center transition-all duration-500`}
+                  style={{
+                    animation: 'win-pop 2s cubic-bezier(0.22, 1, 0.36, 1) forwards',
+                  }}
+                >
+                  <div
+                    className="animate-win-bounce"
+                    style={{
+                      color: '#ffd700',
+                      fontSize: 'clamp(3rem, 10vw, 8rem)',
+                      fontWeight: 'bold',
+                      textShadow: '0 0 30px rgba(255, 215, 0, 0.7)',
+                      WebkitTextStroke: '3px rgba(0, 0, 0, 0.5)',
+                      fontFamily: daydream.style.fontFamily,
+                      transform: 'rotateX(10deg)',
+                    }}
+                  >
+                    +${betAmount * 4}
+                  </div>
+                </div>
+              </div>
             ) : (
               <span>Better luck next time!</span>
             )}
@@ -367,21 +428,19 @@ export default function HorseRacing() {
         <div className="w-full max-w-2xl bg-black/20 rounded-lg p-2 md:p-4 border border-[#ffd700]/10">
           <div className="flex flex-col items-center gap-2 md:gap-4">
             {/* Balance */}
-            <p className={`text-lg md:text-xl text-white ${daydream.className}`}>
-              Balance: ${balance}
-            </p>
+            <p className={`text-lg md:text-xl text-white font-bold`}>Balance: Ⓚ {balance}</p>
 
             {/* Horse Selection */}
             <div className="grid grid-cols-3 gap-2 md:gap-4 w-full">
               {horses.map((horse) => (
                 <button
                   key={horse.id}
-                  onClick={() => handleBet(horse.id)}
-                  disabled={isRacing || balance < betAmount}
+                  onClick={() => setSelectedHorse(horse.id)}
+                  disabled={!isRaceOver || balance < betAmount}
                   className={`p-2 md:p-3 rounded-lg ${
                     selectedHorse === horse.id
                       ? 'bg-[#ffd700] text-black'
-                      : isRacing || balance < betAmount
+                      : !isRaceOver || balance < betAmount
                         ? 'bg-gray-500 cursor-not-allowed'
                         : 'bg-white/10 hover:bg-white/20 text-white'
                   } transition-colors ${daydream.className}`}
@@ -390,7 +449,7 @@ export default function HorseRacing() {
                     <Image src={horse.image} alt={horse.name} fill className="object-contain" />
                   </div>
                   <p className="text-center text-xs md:text-sm">{horse.name}</p>
-                  <p className="text-center text-[10px] md:text-xs opacity-80">3x Payout</p>
+                  <p className="text-center text-[10px] md:text-xs opacity-80">4x Payout</p>
                 </button>
               ))}
             </div>
@@ -399,24 +458,22 @@ export default function HorseRacing() {
             <div className="flex gap-2 md:gap-4 items-center">
               <input
                 type="number"
-                min="1"
+                min=".01"
                 max={balance}
                 value={betAmount}
-                onChange={(e) =>
-                  setBetAmount(Math.min(balance, Math.max(1, parseInt(e.target.value) || 1)))
-                }
+                onChange={(e) => setBetAmount(parseFloat(e.target.value))}
                 className="w-16 md:w-20 px-2 py-1 bg-white/10 text-white rounded border border-[#ffd700]/20 focus:outline-none focus:border-[#ffd700]/40"
               />
               <button
                 onClick={startRace}
-                disabled={!selectedHorse || isRacing}
+                disabled={selectedHorse === null || !isRaceOver}
                 className={`px-4 md:px-6 py-2 rounded-lg ${
-                  !selectedHorse || isRacing
+                  selectedHorse === null || !isRaceOver
                     ? 'bg-gray-500 cursor-not-allowed'
                     : 'bg-[#ffd700] hover:bg-[#ffd700]/90'
                 } text-black font-bold transition-colors ${daydream.className}`}
               >
-                {isRacing ? 'Racing...' : 'Start Race!'}
+                {!isRaceOver ? 'Racing...' : 'Start Race!'}
               </button>
             </div>
           </div>

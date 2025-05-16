@@ -109,23 +109,45 @@ mod kzyno {
             return Err(ErrorCode::InvalidChance.into());
         }
 
+        let global_state = &mut ctx.accounts.global_state;
+        // Calculate max bet size given max drawdown risk r
+        // bet_max(hard) = r · B / (m – 1)
+        let risk = 100; // 1% r
+        let vault_balance = ctx.accounts.vault_account.lamports();
+        let casino_balance = vault_balance
+            .checked_sub(global_state.user_funds)
+            .ok_or(ErrorCode::Overflow)?;
+        let chance_minus_one = chance.checked_sub(1).ok_or(ErrorCode::Overflow)?;
+        let max_bet_size = casino_balance
+            .checked_div(risk)
+            .ok_or(ErrorCode::Overflow)?
+            .checked_div(chance_minus_one)
+            .ok_or(ErrorCode::Overflow)?;
+
+        if wager > max_bet_size {
+            return Err(ErrorCode::BetTooBig.into());
+        }
+
         // The casino has a 1/53 edge. the number 53 is intentionally chosen to be prime,
         // so as to make the casino edge calculation independent of the user's chosen chance.
         let casino_wins_anyway = random_number % 53 == 0;
         let player_wins = random_number % chance == 0 && !casino_wins_anyway;
 
         let user_balance = &mut ctx.accounts.user_balance;
-        let global_state = &mut ctx.accounts.global_state;
         if player_wins {
+            // their winnings would be wager * chance - wager = wager * (chance - 1)
+            let winnings = wager
+                .checked_mul(chance_minus_one)
+                .ok_or(ErrorCode::Overflow)?;
             user_balance.balance = user_balance
                 .balance
-                .checked_add(wager)
+                .checked_add(winnings)
                 .ok_or(ErrorCode::Overflow)?;
             global_state.user_funds = global_state
                 .user_funds
-                .checked_add(wager)
+                .checked_add(winnings)
                 .ok_or(ErrorCode::Overflow)?;
-            emit_cpi!(PlayResult { won: true })
+            emit!(PlayResult { won: true })
         } else {
             user_balance.balance = user_balance
                 .balance
@@ -135,7 +157,7 @@ mod kzyno {
                 .user_funds
                 .checked_sub(wager)
                 .ok_or(ErrorCode::Overflow)?;
-            emit_cpi!(PlayResult { won: false })
+            emit!(PlayResult { won: false })
         }
 
         Ok(())
@@ -389,7 +411,6 @@ pub struct PlayerState {
     commit_slot: u64, // The slot at which the randomness was committed
 }
 
-#[event_cpi]
 #[derive(Accounts)]
 #[instruction(chance: u64, random_number: u64, wager: u64)]
 pub struct PlayGame<'info> {
@@ -407,6 +428,12 @@ pub struct PlayGame<'info> {
         bump
     )]
     pub global_state: Account<'info, GlobalState>,
+
+    #[account(
+        seeds = [b"vault"],
+        bump
+    )]
+    pub vault_account: SystemAccount<'info>, // Receiving account
 
     #[account(mut)]
     pub user: SystemAccount<'info>,
@@ -505,6 +532,7 @@ pub enum ErrorCode {
     InvalidChance,
     InvalidRandomnessAccount,
     Overflow,
+    BetTooBig,
 }
 
 // === Events ===

@@ -5,6 +5,7 @@ import bs58 from 'bs58'
 import { SignJWT } from 'jose'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key' // Use environment variable in production
+export const runtime = 'edge'
 
 export async function POST(request: Request) {
   try {
