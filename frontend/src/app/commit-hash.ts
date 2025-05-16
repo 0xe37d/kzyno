@@ -1,1 +1,1 @@
-export const NEXT_PUBLIC_COMMIT_HASH: string = 'a2a69c57346a8a37969ccd59724e7336b356e6be'
+export const NEXT_PUBLIC_COMMIT_HASH: string = 'fabe760c0336f41e324cbbe911a679a31875eb4f'
