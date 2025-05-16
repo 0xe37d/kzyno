@@ -1,13 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { CasinoClient } from '@/lib/casino-client'
 import Link from 'next/link'
 import { daydream } from '../../fonts'
 import dynamic from 'next/dynamic'
-import { useAnchorWallet, useWallet } from '@solana/wallet-adapter-react'
-import { Connection } from '@solana/web3.js'
-import { MessageSignerWalletAdapter } from '@solana/wallet-adapter-base'
+import { useCasino } from '@/contexts/CasinoContext'
 // Dynamically import the WalletMultiButton with SSR disabled
 const WalletMultiButton = dynamic(
   () => import('@solana/wallet-adapter-react-ui').then((mod) => mod.WalletMultiButton),
@@ -15,11 +12,10 @@ const WalletMultiButton = dynamic(
 )
 
 export default function CasinoTest() {
-  const [casinoClient, setCasinoClient] = useState<CasinoClient | null>(null)
   const [balance, setBalance] = useState<[number, number, number]>([0, 0, 0])
   const [status, setStatus] = useState<{
     circulating_tokens: number
-    vault_balance: string
+    vault_balance: number
     profit: number
   } | null>(null)
   const [betAmount, setBetAmount] = useState<number>(0.01)
@@ -29,25 +25,9 @@ export default function CasinoTest() {
   const [withdrawAmount, setWithdrawAmount] = useState<number>(100)
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
-  const wallet = useAnchorWallet()
-  const otherWallet = useWallet()
-  const adapter = otherWallet.wallet?.adapter
   const [casinoDepositAmount, setCasinoDepositAmount] = useState<number>(0.1) // in SOL
   const [casinoWithdrawAmount, setCasinoWithdrawAmount] = useState<number>(0.1) // in SOL
-
-  // Initialize casino client when wallet is connected
-  useEffect(() => {
-    const connection = new Connection('http://127.0.0.1:8899', 'confirmed')
-    if (wallet && connection) {
-      const client = new CasinoClient(connection, wallet, adapter as MessageSignerWalletAdapter)
-      setCasinoClient(client)
-
-      // Authenticate when wallet is connected
-      client.authenticate().catch(console.error)
-    } else {
-      setCasinoClient(null)
-    }
-  }, [wallet, adapter])
+  const { casinoClient } = useCasino()
 
   // Fetch balance when casino client is initialized
   useEffect(() => {
@@ -55,7 +35,7 @@ export default function CasinoTest() {
       if (casinoClient) {
         try {
           setLoading(true)
-          const bal = await casinoClient.get_balance()
+          const bal = await casinoClient?.get_balance()
           setBalance(bal)
           setError(null)
         } catch (err) {
@@ -234,24 +214,40 @@ export default function CasinoTest() {
             <h2 className={`text-xl font-bold mb-4 ${daydream.className}`}>Balance & Status</h2>
 
             <div className="mb-4">
-              <p className="text-gray-300">SOL Balance: {balance[0] / 1e9} SOL</p>
-              <p className="text-gray-300">Token Balance: {balance[1] / 1e9} tokens</p>
-              <p className="text-gray-300">Casino Balance: {balance[2] / 1e9} SOL</p>
+              <h3 className="font-bold mb-2">Your play money:</h3>
+              <p className="text-gray-300">SOL Balance: {(balance[0] / 1e9).toFixed(3)} SOL</p>
+              <p className="text-gray-300">
+                Casino Balance: {((balance[2] / 1e9) * 170).toFixed(3)} Koins /{' '}
+                {(balance[2] / 1e9).toFixed(3)} SOL
+              </p>
             </div>
 
             {status && (
-              <div className="mb-4">
-                <h3 className="font-bold mb-2">Casino Status:</h3>
-                <p className="text-gray-300">
-                  Circulating Tokens: {status.circulating_tokens / 1e9} tokens
-                </p>
-                <p className="text-gray-300">Vault Balance: {status.vault_balance}</p>
-                <p
-                  className={`font-bold ${status.profit >= 0 ? 'text-green-500' : 'text-red-500'}`}
-                >
-                  Profit: {status.profit.toFixed(4)} SOL
-                </p>
-              </div>
+              <>
+                <div className="mb-4">
+                  <h3 className="font-bold mb-2">Your liquidity provider KZYNO tokens:</h3>
+                  <p className="text-gray-300">
+                    Token Balance: {(balance[1] / 1e9).toFixed(3)} tokens
+                  </p>
+                  <p className="text-gray-300">
+                    Your share of profits: {status?.profit.toFixed(3)} SOL
+                  </p>
+                </div>
+                <div className="mb-4">
+                  <h3 className="font-bold mb-2">Overall Kzyno status:</h3>
+                  <p className="text-gray-300">
+                    Circulating Tokens: {(status.circulating_tokens / 1e9).toFixed(3)} tokens
+                  </p>
+                  <p className="text-gray-300">
+                    Vault Balance: {status.vault_balance.toFixed(3)} SOL
+                  </p>
+                  <p
+                    className={`font-bold ${status.profit >= 0 ? 'text-green-500' : 'text-red-500'}`}
+                  >
+                    Profit: {status.profit.toFixed(3)} SOL
+                  </p>
+                </div>
+              </>
             )}
           </div>
 

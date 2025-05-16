@@ -56,13 +56,13 @@ async function confirmTxHttp(
 
 export async function POST(request: Request) {
   try {
-    const { bet, multiplier, user } = await request.json()
+    const { bet, multiplier, user, cluster } = await request.json()
 
     /* 1. admin signer ---------------------------------------------------- */
     const adminKeypair = Keypair.fromSecretKey(Uint8Array.from(ADMIN_KEY))
 
     /* 2. connection (HTTP fetch, works in workers) ----------------------- */
-    const connection = new Connection('http://127.0.0.1:8899', {
+    const connection = new Connection(cluster, {
       commitment: 'confirmed',
       wsEndpoint: undefined, // <- prevents any WebSocket attempt
     })

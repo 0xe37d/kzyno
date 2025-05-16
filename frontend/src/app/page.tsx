@@ -19,6 +19,17 @@ export default function Home() {
     <main
       className={`min-h-screen flex flex-col items-center justify-center p-4 ${daydream.className}`}
     >
+      <nav className="fixed top-0 left-0 p-4 md:p-6">
+        <div className="flex gap-4">
+          <Link
+            href="/arcade/dashboard"
+            className={`text-2xl md:text-3xl text-white hover:text-pink-200 transition-colors ${daydream.className}`}
+          >
+            Dashboard
+          </Link>
+        </div>
+      </nav>
+
       <nav className="fixed top-0 right-0 p-4 md:p-6">
         <div className="flex gap-4">
           <Link

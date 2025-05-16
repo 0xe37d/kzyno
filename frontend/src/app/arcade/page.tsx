@@ -34,7 +34,7 @@ const games: GameCard[] = [
   {
     id: 'roulette',
     title: 'Roulette',
-    description: 'Classic casino game with high stakes and big wins',
+    description: 'Coming soon...',
     image: '/game/roulette.png',
     path: '/arcade/roulette',
     isAvailable: false,

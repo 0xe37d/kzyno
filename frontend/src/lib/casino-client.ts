@@ -195,6 +195,7 @@ export class CasinoClient {
           bet: betLamports,
           multiplier,
           user: this.provider.wallet.publicKey.toString(),
+          cluster: this.connection.rpcEndpoint,
         }),
       })
 
@@ -298,7 +299,7 @@ export class CasinoClient {
 
   async get_status(): Promise<{
     circulating_tokens: number
-    vault_balance: string
+    vault_balance: number
     profit: number
   }> {
     try {
@@ -314,16 +315,14 @@ export class CasinoClient {
 
       return {
         circulating_tokens: Number(globalState.circulatingTokens),
-        vault_balance: vaultAccount
-          ? `${vaultAccount.lamports / LAMPORTS_PER_SOL} SOL`
-          : 'Not initialized',
+        vault_balance: vaultAccount ? vaultAccount.lamports / LAMPORTS_PER_SOL : 0,
         profit: profit / LAMPORTS_PER_SOL, // Convert to SOL for display
       }
     } catch (error) {
       console.error('Error getting status:', error)
       return {
         circulating_tokens: 0,
-        vault_balance: 'Error getting status',
+        vault_balance: 0,
         profit: 0,
       }
     }

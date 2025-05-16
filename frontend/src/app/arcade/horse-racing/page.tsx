@@ -19,7 +19,7 @@ interface Horse {
   isRacing: boolean
 }
 
-export const RACE_CONSTANTS = {
+const RACE_CONSTANTS = {
   LAPS: 3,
   TRACK_LEN: 1000,
 
