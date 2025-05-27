@@ -6,6 +6,7 @@ import { daydream } from '../../fonts'
 import dynamic from 'next/dynamic'
 import { useCasino } from '@/contexts/CasinoContext'
 import { KOINS_PER_SOL } from '@/lib/constants'
+import { Balance } from '@/lib/casino-client'
 // Dynamically import the WalletMultiButton with SSR disabled
 const WalletMultiButton = dynamic(
   () => import('@solana/wallet-adapter-react-ui').then((mod) => mod.WalletMultiButton),
@@ -13,13 +14,14 @@ const WalletMultiButton = dynamic(
 )
 
 export default function CasinoTest() {
-  const [balance, setBalance] = useState<[number, number, number]>([0, 0, 0])
+  const [balance, setBalance] = useState<Balance>({ sol: 0, token: 0, casino: 0 })
   const [status, setStatus] = useState<{
-    circulating_tokens: number
+    total_liquidity: number
     vault_balance: number
     profit: number
+    profit_share: number
   } | null>(null)
-  const [betAmount, setBetAmount] = useState<number>(0.01)
+  const [betAmount, setBetAmount] = useState<number>(10)
   const [multiplier, setMultiplier] = useState<number>(2)
   const [playResult, setPlayResult] = useState<{ won: boolean; amount_change: number } | null>(null)
   const [depositAmount, setDepositAmount] = useState<number>(1000)
@@ -48,6 +50,11 @@ export default function CasinoTest() {
   const handlePlay = async () => {
     if (!casinoClient) {
       setError('Casino client not initialized')
+      return
+    }
+
+    if (balance.casino < betAmount) {
+      setError('Insufficient balance. Deposit some SOL to the casino.')
       return
     }
 
@@ -201,28 +208,28 @@ export default function CasinoTest() {
 
             <div className="mb-4">
               <h3 className="font-bold mb-2">Your play money:</h3>
-              <p className="text-gray-300">SOL Balance: {(balance[0] / 1e9).toFixed(3)} SOL</p>
+              <p className="text-gray-300">SOL Balance: {(balance.sol / 1e9).toFixed(3)} SOL</p>
               <p className="text-gray-300">
-                Casino Balance: {((balance[2] / 1e9) * KOINS_PER_SOL).toFixed(3)} Koins /{' '}
-                {(balance[2] / 1e9).toFixed(3)} SOL
+                Casino Balance: {((balance.casino / 1e9) * KOINS_PER_SOL).toFixed(3)} Koins /{' '}
+                {(balance.casino / 1e9).toFixed(3)} SOL
               </p>
             </div>
 
             {status && (
               <>
                 <div className="mb-4">
-                  <h3 className="font-bold mb-2">Your liquidity provider KZYNO tokens:</h3>
+                  <h3 className="font-bold mb-2">Your liquidity provider stats:</h3>
                   <p className="text-gray-300">
-                    Token Balance: {(balance[1] / 1e9).toFixed(3)} tokens
+                    Liquidity provided: {(balance.token / 1e9).toFixed(3)} SOL
                   </p>
                   <p className="text-gray-300">
-                    Your share of profits: {status?.profit.toFixed(3)} SOL
+                    Your share of profits: {status?.profit_share.toFixed(3)} SOL
                   </p>
                 </div>
                 <div className="mb-4">
                   <h3 className="font-bold mb-2">Overall Kzyno status:</h3>
                   <p className="text-gray-300">
-                    Circulating Tokens: {(status.circulating_tokens / 1e9).toFixed(3)} tokens
+                    Total Liquidity: {(status.total_liquidity / 1e9).toFixed(3)} tokens
                   </p>
                   <p className="text-gray-300">
                     Vault Balance: {status.vault_balance.toFixed(3)} SOL
@@ -280,8 +287,8 @@ export default function CasinoTest() {
                 <p className="font-bold">{playResult.won ? 'You won!' : 'You lost!'}</p>
                 <p>
                   {playResult.won
-                    ? `Winnings: +${playResult.amount_change} tokens`
-                    : `Loss: ${playResult.amount_change} tokens`}
+                    ? `Winnings: +${Math.round(playResult.amount_change * KOINS_PER_SOL)} tokens`
+                    : `Loss: ${Math.round(playResult.amount_change * KOINS_PER_SOL)} tokens`}
                 </p>
               </div>
             )}
@@ -291,8 +298,8 @@ export default function CasinoTest() {
           <div className="bg-gray-800 p-6 rounded-lg">
             <h2 className={`text-xl font-bold mb-4 ${daydream.className}`}>Liquidity Management</h2>
             <p className="text-gray-400 mb-4 text-md">
-              Deposit or withdraw liquidity tokens to/from the casino. These tokens are used to
-              provide liquidity to the casino, and they entitle you to a share of kzynos profits.
+              Deposit or withdraw liquidity tokens to/from the casino. This SOL is used to provide
+              liquidity to the casino, and they entitle you to a share of kzyno&apos;s profits.
             </p>
 
             <div className="mb-4">
@@ -315,7 +322,7 @@ export default function CasinoTest() {
             </button>
 
             <div className="mb-4">
-              <label className="block text-gray-300 mb-2">Withdraw Amount ($KZYNO):</label>
+              <label className="block text-gray-300 mb-2">Withdraw Amount (SOL):</label>
               <input
                 type="number"
                 value={withdrawAmount}

@@ -267,6 +267,20 @@ export default function HorseRacing() {
     )
   }
 
+  if (balance === 0) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#1a472a]">
+        <h1 className={`text-2xl text-white mb-4 ${daydream.className}`}>
+          Deposit some SOL in the{' '}
+          <Link href="/arcade/dashboard" className="text-pink-200 hover:text-pink-300">
+            casino
+          </Link>{' '}
+          to play
+        </h1>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[#1a472a] relative overflow-hidden">
       {/* Casino-style decorative elements */}

@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import AirdropSignup from './components/AirdropSignup'
 import { daydream } from './fonts'
+import XLogo from './x_logo'
 
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -69,6 +70,16 @@ export default function Home() {
       >
         Sign Up for Airdrop
       </button>
+
+      <div className="fixed bottom-0 right-0 p-4 md:p-6">
+        <Link
+          target="_blank"
+          href="https://x.com/0xe37"
+          className="hover:text-pink-200 transition-colors"
+        >
+          <XLogo />
+        </Link>
+      </div>
 
       <AirdropSignup isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </main>

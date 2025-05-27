@@ -13,7 +13,15 @@ export interface PlayResult {
   amount_change: number
 }
 
+export interface Balance {
+  sol: number
+  token: number
+  casino: number
+}
+
 export const leU64 = (n: number | BN) => new BN(n).toArrayLike(Buffer, 'le', 8)
+
+const q64ToLamports = (q: BN) => q.abs().shrn(64)
 
 async function isAuthenticated(): Promise<boolean> {
   const res = await fetch('/api/auth/me', {
@@ -32,6 +40,7 @@ export class CasinoClient {
   private userBalancePda: PublicKey | null = null
   private userLiquidityPda: PublicKey | null = null
   private adapter: MessageSignerWalletAdapter
+  private isAuthenticated: boolean = false
 
   constructor(connection: Connection, wallet: AnchorWallet, adapter: MessageSignerWalletAdapter) {
     this.connection = connection
@@ -55,7 +64,6 @@ export class CasinoClient {
         [Buffer.from('user_balance'), wallet.publicKey.toBuffer()],
         this.program.programId
       )
-
       ;[this.userLiquidityPda] = PublicKey.findProgramAddressSync(
         [Buffer.from('user_liquidity'), wallet.publicKey.toBuffer(), leU64(0)],
         this.program.programId
@@ -77,7 +85,7 @@ export class CasinoClient {
     }
   }
 
-  async get_balance(): Promise<[number, number, number]> {
+  async get_balance(): Promise<Balance> {
     if (!this.provider.wallet.publicKey || !this.userLiquidityPda) {
       throw new Error('Wallet not connected')
     }
@@ -111,7 +119,7 @@ export class CasinoClient {
         }
       }
 
-      return [solBalance, tokenBalance, casinoBalance]
+      return { sol: solBalance, token: tokenBalance, casino: casinoBalance }
     } catch (error) {
       console.error('Error getting balance:', error)
       throw new Error('Failed to get balance')
@@ -123,7 +131,12 @@ export class CasinoClient {
       throw new Error('Wallet not connected')
     }
 
+    if (this.isAuthenticated) {
+      return
+    }
+
     if (await isAuthenticated()) {
+      this.isAuthenticated = true
       return
     }
 
@@ -161,8 +174,14 @@ export class CasinoClient {
   }
 
   async play(bet: number, multiplier: number): Promise<PlayResult> {
+    await this.authenticate()
+
     if (!this.provider.wallet.publicKey) {
       throw new Error('Wallet not connected')
+    }
+
+    if (!this.userBalancePda) {
+      throw new Error('User balance PDA not found')
     }
 
     try {
@@ -272,33 +291,50 @@ export class CasinoClient {
     }
   }
 
+  get_profit_share(
+    userLiquidityAccount: Awaited<ReturnType<typeof this.program.account.userLiquidity.fetch>>,
+    globalState: Awaited<ReturnType<typeof this.program.account.globalState.fetch>>
+  ): number {
+    const delta = globalState.accProfitPerShare.sub(userLiquidityAccount.profitEntry)
+    const pnlQ64 = userLiquidityAccount.shares.mul(delta) // BN * BN
+    const lamports = q64ToLamports(pnlQ64)
+    return lamports.toNumber()
+  }
+
   async get_status(): Promise<{
-    circulating_tokens: number
+    total_liquidity: number
     vault_balance: number
     profit: number
+    profit_share: number
   }> {
     try {
       console.log('Program ID:', this.program.programId.toString())
       const globalState = await this.program.account.globalState.fetch(this.globalState)
       const vaultAccount = await this.connection.getAccountInfo(this.vaultPda)
-
-      // Calculate profit
       const vaultBalance = vaultAccount ? vaultAccount.lamports : 0
-      const deposits = globalState.deposits.toNumber()
-      const userFunds = globalState.userFunds.toNumber()
-      const profit = vaultBalance - deposits - userFunds
+      const profits = vaultBalance - Number(globalState.deposits) - Number(globalState.userFunds)
+
+      let profit_share = 0
+      if (this.userLiquidityPda) {
+        const userLiquidityAccount = await this.program.account.userLiquidity.fetch(
+          this.userLiquidityPda
+        )
+        profit_share = this.get_profit_share(userLiquidityAccount, globalState)
+      }
 
       return {
-        circulating_tokens: Number(globalState.totalShares),
+        total_liquidity: Number(globalState.totalShares),
         vault_balance: vaultAccount ? vaultAccount.lamports / LAMPORTS_PER_SOL : 0,
-        profit: profit / LAMPORTS_PER_SOL, // Convert to SOL for display
+        profit: profits / LAMPORTS_PER_SOL,
+        profit_share: profit_share / LAMPORTS_PER_SOL,
       }
     } catch (error) {
       console.error('Error getting status:', error)
       return {
-        circulating_tokens: 0,
+        total_liquidity: 0,
         vault_balance: 0,
         profit: 0,
+        profit_share: 0,
       }
     }
   }
