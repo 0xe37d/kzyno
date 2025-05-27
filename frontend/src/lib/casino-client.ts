@@ -1,18 +1,19 @@
 import { Program, AnchorProvider, setProvider, BN } from '@coral-xyz/anchor'
 import { PublicKey, Connection, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js'
 import { AnchorWallet } from '@solana/wallet-adapter-react'
-import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress } from '@solana/spl-token'
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import { MessageSignerWalletAdapter } from '@solana/wallet-adapter-base'
-import type { Kzyno } from './kzyno'
-import idl from './kzyno.json'
+import type { Kzyno } from '@shared/anchor/types/kzyno'
+import idl from '@shared/anchor/idl/kzyno.json'
 import bs58 from 'bs58'
+import { KOINS_PER_SOL } from './constants'
 
 export interface PlayResult {
   won: boolean
   amount_change: number
 }
 
-const KOINS_PER_SOL = 170
+export const leU64 = (n: number | BN) => new BN(n).toArrayLike(Buffer, 'le', 8)
 
 async function isAuthenticated(): Promise<boolean> {
   const res = await fetch('/api/auth/me', {
@@ -25,18 +26,14 @@ async function isAuthenticated(): Promise<boolean> {
 export class CasinoClient {
   private program: Program<Kzyno>
   private connection: Connection
-  private tokenMint: PublicKey
   private globalState: PublicKey
   private vaultPda: PublicKey
-  private reserveTokenVault: PublicKey
-  private reserveAuthority: PublicKey
   private provider: AnchorProvider
   private userBalancePda: PublicKey | null = null
+  private userLiquidityPda: PublicKey | null = null
   private adapter: MessageSignerWalletAdapter
 
   constructor(connection: Connection, wallet: AnchorWallet, adapter: MessageSignerWalletAdapter) {
-    // Use the same values as before
-    this.tokenMint = new PublicKey('e37NMn6EQLSnaz2NZFmBckryxzDYFGfQSqZayeTB6pm')
     this.connection = connection
     this.provider = new AnchorProvider(this.connection, wallet, {})
     setProvider(this.provider)
@@ -51,19 +48,16 @@ export class CasinoClient {
       [Buffer.from('vault')],
       this.program.programId
     )
-    ;[this.reserveTokenVault] = PublicKey.findProgramAddressSync(
-      [Buffer.from('reserve_token_vault')],
-      this.program.programId
-    )
-    ;[this.reserveAuthority] = PublicKey.findProgramAddressSync(
-      [Buffer.from('reserve_authority')],
-      this.program.programId
-    )
 
     // Initialize userBalancePda if wallet is connected
     if (wallet.publicKey) {
       ;[this.userBalancePda] = PublicKey.findProgramAddressSync(
         [Buffer.from('user_balance'), wallet.publicKey.toBuffer()],
+        this.program.programId
+      )
+
+      ;[this.userLiquidityPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from('user_liquidity'), wallet.publicKey.toBuffer(), leU64(0)],
         this.program.programId
       )
     }
@@ -74,13 +68,17 @@ export class CasinoClient {
       throw new Error('Wallet not connected')
     }
 
-    const userBalanceAccount = await this.program.account.userBalance.fetch(this.userBalancePda)
-    const sol = Number(userBalanceAccount.balance) / 1e9
-    return sol * KOINS_PER_SOL
+    try {
+      const userBalanceAccount = await this.program.account.userBalance.fetch(this.userBalancePda)
+      const sol = Number(userBalanceAccount.balance) / 1e9
+      return sol * KOINS_PER_SOL
+    } catch {
+      return 0
+    }
   }
 
   async get_balance(): Promise<[number, number, number]> {
-    if (!this.provider.wallet.publicKey) {
+    if (!this.provider.wallet.publicKey || !this.userLiquidityPda) {
       throw new Error('Wallet not connected')
     }
 
@@ -88,15 +86,16 @@ export class CasinoClient {
       // Get SOL balance
       const solBalance = await this.connection.getBalance(this.provider.wallet.publicKey)
 
-      // Get token balance
-      const tokenAccounts = await this.connection.getParsedTokenAccountsByOwner(
-        this.provider.wallet.publicKey,
-        { mint: this.tokenMint, programId: TOKEN_PROGRAM_ID }
-      )
-
       let tokenBalance = 0
-      if (tokenAccounts.value.length > 0) {
-        tokenBalance = Number(tokenAccounts.value[0].account.data.parsed.info.tokenAmount.amount)
+      if (this.userLiquidityPda) {
+        try {
+          const tokenBalanceAccount = await this.program.account.userLiquidity.fetch(
+            this.userLiquidityPda
+          )
+          tokenBalance = Number(tokenBalanceAccount.shares) / 1e9
+        } catch {
+          console.log('No token balance account found yet')
+        }
       }
 
       // Get casino balance
@@ -222,28 +221,17 @@ export class CasinoClient {
       throw new Error('Wallet not connected')
     }
 
-    console.log(this.reserveTokenVault.toString())
-
     try {
-      const userTokenAccount = await getAssociatedTokenAddress(
-        this.tokenMint,
-        this.provider.wallet.publicKey
-      )
-
       // Convert amount to smallest token unit (assuming 9 decimals like SOL)
       const amountTokens = new BN(Math.floor(amount * 1e9))
 
       await this.program.methods
-        .depositLiquidity(amountTokens)
+        .depositLiquidity(new BN(0), amountTokens)
         .accounts({
           signer: this.provider.wallet.publicKey,
           // @ts-expect-error: anchor types are dumb sometimes
           vaultAccount: this.vaultPda,
           globalState: this.globalState,
-          tokenMint: this.tokenMint,
-          reserveTokenVault: this.reserveTokenVault,
-          reserveAuthority: this.reserveAuthority,
-          userTokenAccount,
           systemProgram: SystemProgram.programId,
           tokenProgram: TOKEN_PROGRAM_ID,
         })
@@ -264,27 +252,14 @@ export class CasinoClient {
     }
 
     try {
-      const userTokenAccount = await getAssociatedTokenAddress(
-        this.tokenMint,
-        this.provider.wallet.publicKey
-      )
-
-      // Convert amount to smallest token unit
-      const amountTokens = new BN(Math.floor(amount * 1e9))
-
       await this.program.methods
-        .withdrawLiquidity(amountTokens)
+        .withdrawLiquidity(new BN(0))
         .accounts({
           signer: this.provider.wallet.publicKey,
           // @ts-expect-error: anchor types are dumb sometimes
           vaultAccount: this.vaultPda,
           globalState: this.globalState,
-          tokenMint: this.tokenMint,
-          reserveTokenVault: this.reserveTokenVault,
-          reserveAuthority: this.reserveAuthority,
-          userTokenAccount,
           systemProgram: SystemProgram.programId,
-          tokenProgram: TOKEN_PROGRAM_ID,
         })
         .rpc()
 
@@ -314,7 +289,7 @@ export class CasinoClient {
       const profit = vaultBalance - deposits - userFunds
 
       return {
-        circulating_tokens: Number(globalState.circulatingTokens),
+        circulating_tokens: Number(globalState.totalShares),
         vault_balance: vaultAccount ? vaultAccount.lamports / LAMPORTS_PER_SOL : 0,
         profit: profit / LAMPORTS_PER_SOL, // Convert to SOL for display
       }

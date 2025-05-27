@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { daydream } from '../../fonts'
 import dynamic from 'next/dynamic'
 import { useCasino } from '@/contexts/CasinoContext'
+import { KOINS_PER_SOL } from '@/lib/constants'
 // Dynamically import the WalletMultiButton with SSR disabled
 const WalletMultiButton = dynamic(
   () => import('@solana/wallet-adapter-react-ui').then((mod) => mod.WalletMultiButton),
@@ -31,43 +32,16 @@ export default function CasinoTest() {
 
   // Fetch balance when casino client is initialized
   useEffect(() => {
+    if (!casinoClient) return
     const fetchBalance = async () => {
-      if (casinoClient) {
-        try {
-          setLoading(true)
-          const bal = await casinoClient?.get_balance()
-          setBalance(bal)
-          setError(null)
-        } catch (err) {
-          console.error('Error fetching balance:', err)
-          setError('Failed to fetch balance')
-        } finally {
-          setLoading(false)
-        }
-      }
+      const bal = await casinoClient.get_balance()
+      setBalance(bal)
     }
-
-    fetchBalance()
-  }, [casinoClient])
-
-  // Fetch status when casino client is initialized
-  useEffect(() => {
     const fetchStatus = async () => {
-      if (casinoClient) {
-        try {
-          setLoading(true)
-          const stat = await casinoClient.get_status()
-          setStatus(stat)
-          setError(null)
-        } catch (err) {
-          console.error('Error fetching status:', err)
-          setError('Failed to fetch status')
-        } finally {
-          setLoading(false)
-        }
-      }
+      const stat = await casinoClient.get_status()
+      setStatus(stat)
     }
-
+    fetchBalance()
     fetchStatus()
   }, [casinoClient])
 
@@ -86,6 +60,10 @@ export default function CasinoTest() {
       // Refresh balance after playing
       const bal = await casinoClient.get_balance()
       setBalance(bal)
+
+      // Refresh status after playing
+      const stat = await casinoClient.get_status()
+      setStatus(stat)
     } catch (err) {
       console.error('Error playing game:', err)
       setError('Failed to play game')
@@ -160,6 +138,10 @@ export default function CasinoTest() {
       // Refresh balance after deposit
       const bal = await casinoClient.get_balance()
       setBalance(bal)
+
+      // Refresh status after deposit
+      const stat = await casinoClient.get_status()
+      setStatus(stat)
     } catch (err) {
       console.error('Error depositing to casino:', err)
       setError('Failed to deposit to casino')
@@ -182,6 +164,10 @@ export default function CasinoTest() {
       // Refresh balance after withdrawal
       const bal = await casinoClient.get_balance()
       setBalance(bal)
+
+      // Refresh status after withdrawal
+      const stat = await casinoClient.get_status()
+      setStatus(stat)
     } catch (err) {
       console.error('Error withdrawing from casino:', err)
       setError('Failed to withdraw from casino')
@@ -217,7 +203,7 @@ export default function CasinoTest() {
               <h3 className="font-bold mb-2">Your play money:</h3>
               <p className="text-gray-300">SOL Balance: {(balance[0] / 1e9).toFixed(3)} SOL</p>
               <p className="text-gray-300">
-                Casino Balance: {((balance[2] / 1e9) * 170).toFixed(3)} Koins /{' '}
+                Casino Balance: {((balance[2] / 1e9) * KOINS_PER_SOL).toFixed(3)} Koins /{' '}
                 {(balance[2] / 1e9).toFixed(3)} SOL
               </p>
             </div>
@@ -256,7 +242,9 @@ export default function CasinoTest() {
             <h2 className={`text-xl font-bold mb-4 ${daydream.className}`}>Play Game</h2>
 
             <div className="mb-4">
-              <label className="block text-gray-300 mb-2">Bet Amount (170 Ⓚ = 1 SOL):</label>
+              <label className="block text-gray-300 mb-2">
+                Bet Amount ({KOINS_PER_SOL.toString()} Ⓚ = 1 SOL):
+              </label>
               <span>
                 <input
                   type="number"

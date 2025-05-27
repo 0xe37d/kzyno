@@ -1,11 +1,31 @@
 use anchor_lang::prelude::*;
 use anchor_lang::system_program::{transfer, Transfer};
-use anchor_spl::{
-    associated_token::AssociatedToken,
-    token_interface::{self, Burn, Mint, TokenAccount, TokenInterface, TransferChecked},
-};
 
 declare_id!("Har3kPZU49yuvD7etW76fMcj3AW83Q1TbRkz1Y9RjCdv");
+
+fn sync_bankroll(idx: &mut GlobalState, vault_balance_now: u64) -> Result<()> {
+    let bankroll_now = vault_balance_now
+        .checked_sub(idx.user_funds)
+        .ok_or(ErrorCode::Overflow)?;
+
+    if idx.total_shares == 0 {
+        idx.last_bankroll = bankroll_now;
+        return Ok(());
+    }
+
+    // signed change (could be negative after a big payout)
+    let delta_lamports = i128::from(bankroll_now) - i128::from(idx.last_bankroll);
+    if delta_lamports != 0 {
+        // convert lamports → Q64.64 lamports-per-share
+        let delta_q64 = (delta_lamports << 64) / (idx.total_shares as i128);
+        idx.acc_profit_per_share = idx
+            .acc_profit_per_share
+            .checked_add(delta_q64)
+            .ok_or(ErrorCode::Overflow)?;
+        idx.last_bankroll = bankroll_now;
+    }
+    Ok(())
+}
 
 #[program]
 mod kzyno {
@@ -14,12 +34,51 @@ mod kzyno {
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
         let global_state = &mut ctx.accounts.global_state;
         global_state.admin = *ctx.accounts.admin.key;
-        global_state.token_mint = ctx.accounts.token_mint.key();
 
         Ok(())
     }
 
-    pub fn deposit_liquidity(ctx: Context<DepositLiquidity>, amount: u64) -> Result<()> {
+    pub fn deposit_liquidity(
+        ctx: Context<DepositLiquidity>,
+        _index: u64, // index of the position, used to create the position account
+        lamports_in: u64,
+    ) -> Result<()> {
+        let vault = &ctx.accounts.vault_account;
+        let global_state = &mut ctx.accounts.global_state;
+        sync_bankroll(global_state, vault.lamports())?;
+
+        // 2. mint shares
+        let shares = if global_state.total_shares == 0 {
+            u128::from(lamports_in)
+        } else {
+            u128::from(lamports_in)
+                .checked_mul(global_state.total_shares)
+                .ok_or(ErrorCode::Overflow)?
+                .checked_div(u128::from(global_state.deposits))
+                .ok_or(ErrorCode::Overflow)?
+        };
+
+        // 3. record the position
+        let pos = &mut ctx.accounts.user_liquidity;
+        pos.deposited = lamports_in;
+        pos.shares = shares;
+        pos.profit_entry = global_state.acc_profit_per_share;
+
+        global_state.deposits = global_state
+            .deposits
+            .checked_add(lamports_in)
+            .ok_or(ErrorCode::Overflow)?;
+
+        global_state.last_bankroll = global_state
+            .last_bankroll
+            .checked_add(lamports_in)
+            .ok_or(ErrorCode::Overflow)?;
+
+        global_state.total_shares = global_state
+            .total_shares
+            .checked_add(shares)
+            .ok_or(ErrorCode::Overflow)?;
+
         // Transfer SOL from the signer to the vault account
         let cpi_context = CpiContext::new(
             ctx.accounts.system_program.to_account_info(),
@@ -29,50 +88,24 @@ mod kzyno {
             },
         );
 
-        transfer(cpi_context, amount)?;
-
-        // Transfer kzyno token from the reserve token account to the user token account
-        let signer_seeds: &[&[&[u8]]] = &[&[b"reserve_authority", &[ctx.bumps.reserve_authority]]];
-        let decimals = ctx.accounts.token_mint.decimals;
-        let cpi_accounts = TransferChecked {
-            from: ctx.accounts.reserve_token_vault.to_account_info(),
-            to: ctx.accounts.user_token_account.to_account_info(),
-            mint: ctx.accounts.token_mint.to_account_info(),
-            authority: ctx.accounts.reserve_authority.to_account_info(),
-        };
-
-        let cpi_program = ctx.accounts.token_program.to_account_info();
-        let cpi_context = CpiContext::new(cpi_program, cpi_accounts).with_signer(signer_seeds);
-
-        token_interface::transfer_checked(cpi_context, amount, decimals)?;
-
-        // Update the global state
-        let global_state = &mut ctx.accounts.global_state;
-        global_state.circulating_tokens = global_state
-            .circulating_tokens
-            .checked_add(amount)
-            .ok_or(ErrorCode::Overflow)?;
-        global_state.deposits = global_state
-            .deposits
-            .checked_add(amount)
-            .ok_or(ErrorCode::Overflow)?;
+        transfer(cpi_context, lamports_in)?;
 
         Ok(())
     }
 
-    pub fn deposit_funds(ctx: Context<DepositFunds>, amount: u64) -> Result<()> {
+    pub fn deposit_funds(ctx: Context<DepositFunds>, lamports_in: u64) -> Result<()> {
         // Update the user balance
         let user_balance = &mut ctx.accounts.user_balance;
         user_balance.balance = user_balance
             .balance
-            .checked_add(amount)
+            .checked_add(lamports_in)
             .ok_or(ErrorCode::Overflow)?;
 
         // Update the user funds in global state
         let global_state = &mut ctx.accounts.global_state;
         global_state.user_funds = global_state
             .user_funds
-            .checked_add(amount)
+            .checked_add(lamports_in)
             .ok_or(ErrorCode::Overflow)?;
 
         // Transfer SOL from the signer to the vault account
@@ -84,7 +117,7 @@ mod kzyno {
             },
         );
 
-        transfer(cpi_context, amount)?;
+        transfer(cpi_context, lamports_in)?;
 
         Ok(())
     }
@@ -95,8 +128,12 @@ mod kzyno {
         random_number: u64,
         wager: u64,
     ) -> Result<()> {
+        let global_state = &mut ctx.accounts.global_state;
+        let vault_balance = ctx.accounts.vault_account.lamports();
+        sync_bankroll(global_state, vault_balance)?;
+
         // Only admin can call play game
-        if ctx.accounts.signer.key() != ctx.accounts.global_state.admin {
+        if ctx.accounts.signer.key() != global_state.admin {
             return Err(ErrorCode::Unauthorized.into());
         }
 
@@ -109,11 +146,9 @@ mod kzyno {
             return Err(ErrorCode::InvalidChance.into());
         }
 
-        let global_state = &mut ctx.accounts.global_state;
         // Calculate max bet size given max drawdown risk r
         // bet_max(hard) = r · B / (m – 1)
         let risk = 100; // 1% r
-        let vault_balance = ctx.accounts.vault_account.lamports();
         let casino_balance = vault_balance
             .checked_sub(global_state.user_funds)
             .ok_or(ErrorCode::Overflow)?;
@@ -163,8 +198,12 @@ mod kzyno {
         Ok(())
     }
 
-    pub fn withdraw_funds(ctx: Context<WithdrawFunds>, amount: u64) -> Result<()> {
-        if ctx.accounts.user_balance.balance < amount {
+    pub fn withdraw_funds(ctx: Context<WithdrawFunds>, lamports_in: u64) -> Result<()> {
+        let global_state = &mut ctx.accounts.global_state;
+        let vault = &ctx.accounts.vault_account;
+        sync_bankroll(global_state, vault.lamports())?;
+
+        if ctx.accounts.user_balance.balance < lamports_in {
             return Err(ErrorCode::NotEnoughFunds.into());
         }
 
@@ -175,7 +214,7 @@ mod kzyno {
         let signer_seeds: &[&[&[u8]]] = &[vault_seeds]; // slice-of-slices
 
         let cpi_accounts = Transfer {
-            from: ctx.accounts.vault_account.to_account_info(),
+            from: vault.to_account_info(),
             to: ctx.accounts.user.to_account_info(),
         };
 
@@ -185,55 +224,39 @@ mod kzyno {
             signer_seeds,
         );
 
-        transfer(cpi_ctx, amount)?;
-        let global_state = &mut ctx.accounts.global_state;
+        transfer(cpi_ctx, lamports_in)?;
         global_state.user_funds = global_state
             .user_funds
-            .checked_sub(amount)
+            .checked_sub(lamports_in)
             .ok_or(ErrorCode::Overflow)?;
 
         Ok(())
     }
 
-    pub fn withdraw_liquidity(ctx: Context<WithdrawReserveLiquidity>, amount: u64) -> Result<()> {
-        // Verify proper token mint
-        if ctx.accounts.token_mint.key() != ctx.accounts.global_state.token_mint {
-            return Err(ErrorCode::IncorrectTokenMint.into());
-        }
+    pub fn withdraw_liquidity(ctx: Context<WithdrawReserveLiquidity>, _index: u64) -> Result<()> {
+        let idx = &mut ctx.accounts.global_state;
+        let vault = &ctx.accounts.vault_account;
+        sync_bankroll(idx, vault.lamports())?;
 
-        let cpi_accounts = Burn {
-            mint: ctx.accounts.token_mint.to_account_info(),
-            from: ctx.accounts.user_token_account.to_account_info(),
-            authority: ctx.accounts.signer.to_account_info(),
-        };
-        let cpi_program = ctx.accounts.token_program.to_account_info();
-        let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
+        // Calculate share
+        let pos = &mut ctx.accounts.user_liquidity;
 
-        // Burn the fkn token!
-        token_interface::burn(cpi_context, amount)?;
+        // principal share (exact pro-rata)
+        let principal = (u128::from(idx.deposits) * pos.shares / idx.total_shares) as u64;
+        // profits earned while staked
+        let profit_delta = idx.acc_profit_per_share - pos.profit_entry; // i128
+        let pnl_q64 = pos.shares as i128 * profit_delta; // i256 in math, cast fits
+        let pnl_lamports = (pnl_q64 >> 64) as i64; // signed
+        let payout = (principal as i128 + pnl_lamports as i128) as u64;
 
-        let global_state = &mut ctx.accounts.global_state;
-        global_state.deposits = global_state
-            .deposits
-            .checked_sub(amount)
+        // burn shares & update globals
+        idx.total_shares = idx
+            .total_shares
+            .checked_sub(pos.shares)
             .ok_or(ErrorCode::Overflow)?;
-        // Calculate what fraction of circulating kzyno tokens they own
-        let fraction = global_state
-            .circulating_tokens
-            .checked_div(amount)
-            .ok_or(ErrorCode::Overflow)?;
-
-        // Calculate the current bankroll + profits: amount in vault - amount that is user credit / funds
-        let bankroll_plus_profits = ctx
-            .accounts
-            .vault_account
-            .lamports()
-            .checked_sub(global_state.user_funds)
-            .ok_or(ErrorCode::Overflow)?;
-
-        // They are entitled to that fraction of the bankroll + profits
-        let dues = bankroll_plus_profits
-            .checked_div(fraction)
+        idx.last_bankroll = idx
+            .last_bankroll
+            .checked_sub(payout)
             .ok_or(ErrorCode::Overflow)?;
 
         // Send the money
@@ -243,7 +266,7 @@ mod kzyno {
         ];
         let signer_seeds: &[&[&[u8]]] = &[vault_seeds]; // slice-of-slices
         let cpi_accounts = Transfer {
-            from: ctx.accounts.vault_account.to_account_info(),
+            from: vault.to_account_info(),
             to: ctx.accounts.signer.to_account_info(),
         };
         let cpi_ctx = CpiContext::new_with_signer(
@@ -252,10 +275,12 @@ mod kzyno {
             signer_seeds,
         );
 
-        transfer(cpi_ctx, dues)?;
+        transfer(cpi_ctx, payout)?;
 
-        // Update the global state
-        global_state.circulating_tokens -= amount;
+        idx.deposits = idx
+            .deposits
+            .checked_sub(pos.deposited)
+            .ok_or(ErrorCode::Overflow)?;
 
         Ok(())
     }
@@ -277,33 +302,11 @@ pub struct Initialize<'info> {
     )]
     pub global_state: Account<'info, GlobalState>,
 
-    #[account(
-        init_if_needed,
-        payer = admin,
-        token::mint = token_mint,
-        token::authority = reserve_authority,
-        token::token_program = token_program,
-        seeds = [b"reserve_token_vault"],
-        bump
-    )]
-    pub reserve_token_vault: InterfaceAccount<'info, TokenAccount>,
-    #[account(
-        init_if_needed,
-        payer = admin,
-        space = 0,
-        seeds = [b"reserve_authority"],
-        bump
-    )]
-    /// CHECK: Only used as token account authority
-    pub reserve_authority: UncheckedAccount<'info>,
-    pub token_mint: InterfaceAccount<'info, Mint>,
-
     pub system_program: Program<'info, System>,
-    pub token_program: Interface<'info, TokenInterface>,
 }
 
 #[derive(Accounts)]
-#[instruction(amount: u64)]
+#[instruction(index: u64, lamports_in: u64)]
 pub struct DepositLiquidity<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
@@ -321,40 +324,21 @@ pub struct DepositLiquidity<'info> {
     )]
     pub global_state: Account<'info, GlobalState>,
 
-    #[account(mut)]
-    pub token_mint: InterfaceAccount<'info, Mint>,
     #[account(
-        init_if_needed,
+        init,
+        space = 8 + std::mem::size_of::<UserLiquidity>(), // Allocate space
         payer = signer,
-        associated_token::mint = token_mint,
-        associated_token::authority = signer,
-        associated_token::token_program = token_program,
-    )]
-    pub user_token_account: InterfaceAccount<'info, TokenAccount>,
-
-    #[account(
-        mut,
-        token::mint = token_mint,
-        token::authority = reserve_authority,
-        token::token_program = token_program,
-        seeds = [b"reserve_token_vault"],
-        bump
-    )]
-    pub reserve_token_vault: InterfaceAccount<'info, TokenAccount>,
-    #[account(
-        seeds = [b"reserve_authority"],
+        seeds = [b"user_liquidity", signer.key().as_ref(), &index.to_le_bytes()], 
         bump,
-    )]
-    /// CHECK: Only used as token account authority
-    pub reserve_authority: UncheckedAccount<'info>,
 
-    pub token_program: Interface<'info, TokenInterface>,
-    pub associated_token_program: Program<'info, AssociatedToken>,
+    )]
+    pub user_liquidity: Account<'info, UserLiquidity>,
+
     pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
-#[instruction(amount: u64)]
+#[instruction(lamports_in: u64)]
 pub struct DepositFunds<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
@@ -388,10 +372,11 @@ pub struct DepositFunds<'info> {
 #[account]
 pub struct GlobalState {
     pub admin: Pubkey,
-    pub token_mint: Pubkey,
-    pub circulating_tokens: u64,
+    pub total_shares: u128,
+    pub acc_profit_per_share: i128,
     pub user_funds: u64,
     pub deposits: u64,
+    pub last_bankroll: u64, // vault – user_funds at last sync
 }
 
 #[account]
@@ -401,12 +386,20 @@ pub struct UserBalance {
 }
 
 #[account]
+pub struct UserLiquidity {
+    pub deposited: u64,     // lamports they put in
+    pub shares: u128,       // proportional share of the bankroll
+    pub profit_entry: i128, // snapshot of acc_profits_per_share at the time of deposit
+    pub bump: u8,           // For PDA verification
+}
+
+#[account]
 pub struct PlayerState {
     allowed_user: Pubkey,
     latest_flip_result: bool,   // Stores the result of the latest flip
     randomness_account: Pubkey, // Reference to the Switchboard randomness account
     current_guess: bool,        // The current guess
-    wager: u64,                 // The wager amount
+    wager: u64,                 // The wager lamports_in
     bump: u8,
     commit_slot: u64, // The slot at which the randomness was committed
 }
@@ -468,7 +461,7 @@ pub struct WithdrawFunds<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(amount: u64)]
+#[instruction(index: u64)]
 pub struct WithdrawReserveLiquidity<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
@@ -486,34 +479,15 @@ pub struct WithdrawReserveLiquidity<'info> {
     )]
     pub global_state: Account<'info, GlobalState>,
 
-    #[account(mut)]
-    pub token_mint: InterfaceAccount<'info, Mint>,
     #[account(
         mut,
-        associated_token::mint = token_mint,
-        associated_token::authority = signer,
-        associated_token::token_program = token_program,
-    )]
-    pub user_token_account: InterfaceAccount<'info, TokenAccount>,
-
-    #[account(
-        mut,
-        token::mint = token_mint,
-        token::authority = reserve_authority,
-        token::token_program = token_program,
-        seeds = [b"reserve_token_vault"],
-        bump
-    )]
-    pub reserve_token_vault: InterfaceAccount<'info, TokenAccount>,
-    #[account(
-        seeds = [b"reserve_authority"],
+        seeds = [b"user_liquidity", signer.key().as_ref(), &index.to_le_bytes()],
+        close = signer,
         bump,
-    )]
-    /// CHECK: Only used as token account authority
-    pub reserve_authority: UncheckedAccount<'info>,
 
-    pub token_program: Interface<'info, TokenInterface>,
-    pub associated_token_program: Program<'info, AssociatedToken>,
+    )]
+    pub user_liquidity: Account<'info, UserLiquidity>,
+
     pub system_program: Program<'info, System>,
 }
 
@@ -533,6 +507,8 @@ pub enum ErrorCode {
     InvalidRandomnessAccount,
     Overflow,
     BetTooBig,
+    InsufficientOutput,
+    LiquidityLocked,
 }
 
 // === Events ===

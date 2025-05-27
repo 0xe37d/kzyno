@@ -8,7 +8,7 @@ import {
   ConfirmedTransactionMeta,
 } from '@solana/web3.js'
 import { buildPlayGameData } from '@/lib/solana/serialization'
-import idl from '@/lib/kzyno.json'
+import idl from '@shared/anchor/idl/kzyno.json'
 import { NextResponse } from 'next/server'
 
 const PROGRAM_ID = new PublicKey(idl.address) // <- from idl

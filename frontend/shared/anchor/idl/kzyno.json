@@ -104,7 +104,7 @@
       ],
       "args": [
         {
-          "name": "amount",
+          "name": "lamports_in",
           "type": "u64"
         }
       ]
@@ -171,133 +171,39 @@
           }
         },
         {
-          "name": "token_mint",
-          "writable": true
-        },
-        {
-          "name": "user_token_account",
+          "name": "user_liquidity",
           "writable": true,
           "pda": {
             "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114,
+                  95,
+                  108,
+                  105,
+                  113,
+                  117,
+                  105,
+                  100,
+                  105,
+                  116,
+                  121
+                ]
+              },
               {
                 "kind": "account",
                 "path": "signer"
               },
               {
-                "kind": "account",
-                "path": "token_program"
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "reserve_token_vault",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  114,
-                  101,
-                  115,
-                  101,
-                  114,
-                  118,
-                  101,
-                  95,
-                  116,
-                  111,
-                  107,
-                  101,
-                  110,
-                  95,
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
+                "kind": "arg",
+                "path": "index"
               }
             ]
           }
-        },
-        {
-          "name": "reserve_authority",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  114,
-                  101,
-                  115,
-                  101,
-                  114,
-                  118,
-                  101,
-                  95,
-                  97,
-                  117,
-                  116,
-                  104,
-                  111,
-                  114,
-                  105,
-                  116,
-                  121
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "token_program"
-        },
-        {
-          "name": "associated_token_program",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         },
         {
           "name": "system_program",
@@ -306,7 +212,11 @@
       ],
       "args": [
         {
-          "name": "amount",
+          "name": "_index",
+          "type": "u64"
+        },
+        {
+          "name": "lamports_in",
           "type": "u64"
         }
       ]
@@ -355,76 +265,8 @@
           }
         },
         {
-          "name": "reserve_token_vault",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  114,
-                  101,
-                  115,
-                  101,
-                  114,
-                  118,
-                  101,
-                  95,
-                  116,
-                  111,
-                  107,
-                  101,
-                  110,
-                  95,
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "reserve_authority",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  114,
-                  101,
-                  115,
-                  101,
-                  114,
-                  118,
-                  101,
-                  95,
-                  97,
-                  117,
-                  116,
-                  104,
-                  111,
-                  114,
-                  105,
-                  116,
-                  121
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "token_mint"
-        },
-        {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "token_program"
         }
       ],
       "args": []
@@ -639,7 +481,7 @@
       ],
       "args": [
         {
-          "name": "amount",
+          "name": "lamports_in",
           "type": "u64"
         }
       ]
@@ -706,133 +548,39 @@
           }
         },
         {
-          "name": "token_mint",
-          "writable": true
-        },
-        {
-          "name": "user_token_account",
+          "name": "user_liquidity",
           "writable": true,
           "pda": {
             "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114,
+                  95,
+                  108,
+                  105,
+                  113,
+                  117,
+                  105,
+                  100,
+                  105,
+                  116,
+                  121
+                ]
+              },
               {
                 "kind": "account",
                 "path": "signer"
               },
               {
-                "kind": "account",
-                "path": "token_program"
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "reserve_token_vault",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  114,
-                  101,
-                  115,
-                  101,
-                  114,
-                  118,
-                  101,
-                  95,
-                  116,
-                  111,
-                  107,
-                  101,
-                  110,
-                  95,
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
+                "kind": "arg",
+                "path": "index"
               }
             ]
           }
-        },
-        {
-          "name": "reserve_authority",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  114,
-                  101,
-                  115,
-                  101,
-                  114,
-                  118,
-                  101,
-                  95,
-                  97,
-                  117,
-                  116,
-                  104,
-                  111,
-                  114,
-                  105,
-                  116,
-                  121
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "token_program"
-        },
-        {
-          "name": "associated_token_program",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         },
         {
           "name": "system_program",
@@ -841,7 +589,7 @@
       ],
       "args": [
         {
-          "name": "amount",
+          "name": "_index",
           "type": "u64"
         }
       ]
@@ -872,6 +620,19 @@
         132,
         29,
         191
+      ]
+    },
+    {
+      "name": "UserLiquidity",
+      "discriminator": [
+        231,
+        187,
+        233,
+        254,
+        66,
+        35,
+        139,
+        26
       ]
     }
   ],
@@ -939,6 +700,14 @@
     {
       "code": 6011,
       "name": "BetTooBig"
+    },
+    {
+      "code": 6012,
+      "name": "InsufficientOutput"
+    },
+    {
+      "code": 6013,
+      "name": "LiquidityLocked"
     }
   ],
   "types": [
@@ -952,12 +721,12 @@
             "type": "pubkey"
           },
           {
-            "name": "token_mint",
-            "type": "pubkey"
+            "name": "total_shares",
+            "type": "u128"
           },
           {
-            "name": "circulating_tokens",
-            "type": "u64"
+            "name": "acc_profit_per_share",
+            "type": "i128"
           },
           {
             "name": "user_funds",
@@ -965,6 +734,10 @@
           },
           {
             "name": "deposits",
+            "type": "u64"
+          },
+          {
+            "name": "last_bankroll",
             "type": "u64"
           }
         ]
@@ -990,6 +763,30 @@
           {
             "name": "balance",
             "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UserLiquidity",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "deposited",
+            "type": "u64"
+          },
+          {
+            "name": "shares",
+            "type": "u128"
+          },
+          {
+            "name": "profit_entry",
+            "type": "i128"
           },
           {
             "name": "bump",
