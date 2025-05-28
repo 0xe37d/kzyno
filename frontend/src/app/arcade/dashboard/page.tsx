@@ -250,7 +250,7 @@ export default function CasinoTest() {
 
             <div className="mb-4">
               <label className="block text-gray-300 mb-2">
-                Bet Amount ({KOINS_PER_SOL.toString()} Ⓚ = 1 SOL):
+                Bet Amount ({KOINS_PER_SOL.toString()} KZY = 1 SOL):
               </label>
               <span>
                 <input

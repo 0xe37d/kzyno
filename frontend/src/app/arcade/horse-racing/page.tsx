@@ -442,7 +442,7 @@ export default function HorseRacing() {
         <div className="w-full max-w-2xl bg-black/20 rounded-lg p-2 md:p-4 border border-[#ffd700]/10">
           <div className="flex flex-col items-center gap-2 md:gap-4">
             {/* Balance */}
-            <p className={`text-lg md:text-xl text-white font-bold`}>Balance: Ⓚ {balance}</p>
+            <p className={`text-lg md:text-xl text-white font-bold`}>Balance: {balance}</p>
 
             {/* Horse Selection */}
             <div className="grid grid-cols-3 gap-2 md:gap-4 w-full">
