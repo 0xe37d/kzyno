@@ -12,6 +12,7 @@ interface GameCard {
   image: string
   path: string
   isAvailable: boolean
+  multiplier: string
 }
 
 const games: GameCard[] = [
@@ -22,6 +23,7 @@ const games: GameCard[] = [
     image: '/game/horses.png',
     path: '/arcade/horse-racing',
     isAvailable: true,
+    multiplier: '4x',
   },
   {
     id: 'coinflip',
@@ -30,6 +32,7 @@ const games: GameCard[] = [
     image: '/game/coin.png',
     path: '/arcade/coinflip',
     isAvailable: true,
+    multiplier: '2x',
   },
   {
     id: 'slots',
@@ -38,6 +41,7 @@ const games: GameCard[] = [
     image: '/game/slots.png',
     path: '#',
     isAvailable: false,
+    multiplier: '10x',
   },
   {
     id: 'roulette',
@@ -46,6 +50,7 @@ const games: GameCard[] = [
     image: '/game/roulette.png',
     path: '/arcade/roulette',
     isAvailable: false,
+    multiplier: '36x',
   },
   {
     id: 'baccarat',
@@ -54,6 +59,7 @@ const games: GameCard[] = [
     image: '/game/baccarat.png',
     path: '#',
     isAvailable: false,
+    multiplier: '8x',
   },
 ]
 
@@ -112,6 +118,28 @@ export default function Arcade() {
                 key={game.id}
                 className={`relative group perspective-1000 ${!game.isAvailable && 'opacity-60'}`}
               >
+                {/* Floating Multiplier Badge - moved outside the card container */}
+                <div className="absolute -top-3 -right-3 z-30 transform transition-all duration-500 group-hover:scale-110 group-hover:-translate-y-1 group-hover:rotate-12">
+                  <div className="relative">
+                    {/* Glow effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full blur-md opacity-75 animate-pulse"></div>
+
+                    {/* Main badge */}
+                    <div
+                      className={`relative bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-black font-black text-lg md:text-xl px-3 py-1 rounded-full border-2 border-white/30 shadow-2xl ${daydream.className}`}
+                    >
+                      <span className="relative z-10 drop-shadow-sm">{game.multiplier}</span>
+
+                      {/* Inner shine effect */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/20 to-white/40 rounded-full"></div>
+
+                      {/* Sparkle effects */}
+                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-white rounded-full animate-ping opacity-75"></div>
+                      <div className="absolute -bottom-1 -left-1 w-1 h-1 bg-yellow-200 rounded-full animate-pulse delay-500"></div>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="relative aspect-square bg-gradient-to-br from-white/10 to-white/5 rounded-2xl overflow-hidden border border-white/20 transition-all duration-500 ease-out transform-gpu group-hover:scale-105 group-hover:-translate-y-4 group-hover:rotate-1 shadow-2xl group-hover:shadow-pink-500/25 backdrop-blur-sm">
                   {/* Glowing border effect */}
                   <div className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-pink-500/20 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
