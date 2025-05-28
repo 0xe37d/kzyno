@@ -100,7 +100,7 @@ export class CasinoClient {
           const tokenBalanceAccount = await this.program.account.userLiquidity.fetch(
             this.userLiquidityPda
           )
-          tokenBalance = Number(tokenBalanceAccount.shares) / 1e9
+          tokenBalance = Number(tokenBalanceAccount.shares)
         } catch {
           console.log('No token balance account found yet')
         }
