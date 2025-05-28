@@ -15,6 +15,7 @@ import { jwtVerify } from 'jose'
 const PROGRAM_ID = new PublicKey(idl.address) // <- from idl
 const ADMIN_KEY = JSON.parse(process.env.ADMIN_PRIVATE_KEY!) // `[1,2,3,..]`
 const JWT_SECRET = process.env.JWT_SECRET
+const DEVNET_RPC_URL = process.env.DEVNET_RPC_URL
 
 export const runtime = 'edge'
 
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
     const adminKeypair = Keypair.fromSecretKey(Uint8Array.from(ADMIN_KEY))
 
     /* 2. connection (HTTP fetch, works in workers) ----------------------- */
-    const connection = new Connection(cluster, {
+    const connection = new Connection(cluster.includes('devnet') ? DEVNET_RPC_URL : cluster, {
       commitment: 'confirmed',
       wsEndpoint: undefined, // <- prevents any WebSocket attempt
     })
