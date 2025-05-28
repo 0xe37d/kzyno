@@ -212,7 +212,6 @@ export class CasinoClient {
         body: JSON.stringify({
           bet: betLamports,
           multiplier,
-          user: this.provider.wallet.publicKey.toString(),
           cluster: this.connection.rpcEndpoint,
         }),
       })

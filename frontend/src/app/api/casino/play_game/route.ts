@@ -9,10 +9,12 @@ import {
 } from '@solana/web3.js'
 import { buildPlayGameData } from '@/lib/solana/serialization'
 import idl from '@shared/anchor/idl/kzyno.json'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { jwtVerify } from 'jose'
 
 const PROGRAM_ID = new PublicKey(idl.address) // <- from idl
 const ADMIN_KEY = JSON.parse(process.env.ADMIN_PRIVATE_KEY!) // `[1,2,3,..]`
+const JWT_SECRET = process.env.JWT_SECRET
 
 export const runtime = 'edge'
 
@@ -54,9 +56,27 @@ async function confirmTxHttp(
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const { bet, multiplier, user, cluster } = await request.json()
+    const { bet, multiplier, cluster } = await request.json()
+    const token = request.cookies.get('auth_token')?.value
+
+    if (!token) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+
+    if (!JWT_SECRET) {
+      return NextResponse.json({ error: 'JWT_SECRET is not set' }, { status: 500 })
+    }
+
+    const { payload } = await jwtVerify(token, new TextEncoder().encode(JWT_SECRET))
+    const user = payload.pubkey
+
+    if (!user) {
+      const response = NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+      response.cookies.delete('auth_token')
+      return response
+    }
 
     /* 1. admin signer ---------------------------------------------------- */
     const adminKeypair = Keypair.fromSecretKey(Uint8Array.from(ADMIN_KEY))
