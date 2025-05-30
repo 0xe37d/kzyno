@@ -17,6 +17,15 @@ interface GameCard {
 
 const games: GameCard[] = [
   {
+    id: 'baccarat',
+    title: 'Baccarat',
+    description: 'Classic card game! Bet on Player, Banker, or Tie!',
+    image: '/game/baccarat.png',
+    path: '/arcade/baccarat',
+    isAvailable: true,
+    multiplier: '9x',
+  },
+  {
     id: 'horse-racing',
     title: 'Horse Racing',
     description: 'Bet on your favorite horse and watch them race!',
@@ -24,6 +33,15 @@ const games: GameCard[] = [
     path: '/arcade/horse-racing',
     isAvailable: true,
     multiplier: '4x',
+  },
+  {
+    id: 'russian-roulette',
+    title: 'Russian Roulette',
+    description: 'Will he survive? 1 in 6 chance of survival!',
+    image: '/game/standing.png',
+    path: '/arcade/russian-roulette',
+    isAvailable: true,
+    multiplier: '6x',
   },
   {
     id: 'coinflip',
@@ -51,15 +69,6 @@ const games: GameCard[] = [
     path: '/arcade/roulette',
     isAvailable: false,
     multiplier: '36x',
-  },
-  {
-    id: 'baccarat',
-    title: 'Baccarat',
-    description: 'Coming soon...',
-    image: '/game/baccarat.png',
-    path: '#',
-    isAvailable: false,
-    multiplier: '8x',
   },
 ]
 

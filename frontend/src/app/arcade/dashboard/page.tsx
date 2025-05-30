@@ -7,6 +7,8 @@ import dynamic from 'next/dynamic'
 import { useCasino } from '@/contexts/CasinoContext'
 import { KOINS_PER_SOL } from '@/lib/constants'
 import { Balance } from '@/lib/casino-client'
+import Image from 'next/image'
+
 // Dynamically import the WalletMultiButton with SSR disabled
 const WalletMultiButton = dynamic(
   () => import('@solana/wallet-adapter-react-ui').then((mod) => mod.WalletMultiButton),
@@ -30,7 +32,11 @@ export default function CasinoTest() {
   const [error, setError] = useState<string | null>(null)
   const [casinoDepositAmount, setCasinoDepositAmount] = useState<number>(0.1) // in SOL
   const [casinoWithdrawAmount, setCasinoWithdrawAmount] = useState<number>(0.1) // in SOL
-  const { casinoClient } = useCasino()
+  const [showDevnetHelp, setShowDevnetHelp] = useState<boolean>(false)
+  const { casinoClient, cluster } = useCasino()
+
+  // Check if user is on devnet
+  const isDevnet = cluster?.includes('devnet')
 
   // Fetch balance when casino client is initialized
   useEffect(() => {
@@ -198,6 +204,33 @@ export default function CasinoTest() {
             </Link>
           </div>
         </div>
+
+        {/* Devnet Help Hint */}
+        {isDevnet && (
+          <div className="mb-6 bg-gradient-to-r from-purple-900/50 to-pink-900/50 border border-purple-500/30 rounded-xl p-4 backdrop-blur-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full flex items-center justify-center">
+                  <span className="text-lg">🚀</span>
+                </div>
+                <div>
+                  <h3 className={`text-lg font-bold text-white ${daydream.className}`}>
+                    You&apos;re on Devnet!
+                  </h3>
+                  <p className="text-purple-200 text-sm">
+                    Make sure your Phantom wallet is configured for devnet transactions
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowDevnetHelp(true)}
+                className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-400 hover:to-pink-400 transition-all duration-300 font-medium"
+              >
+                Show Setup Guide
+              </button>
+            </div>
+          </div>
+        )}
 
         {error && <div className="bg-red-600 text-white p-4 rounded mb-4">{error}</div>}
 
@@ -391,6 +424,161 @@ export default function CasinoTest() {
           </div>
         </div>
       </div>
+
+      {/* Devnet Setup Guide Modal */}
+      {showDevnetHelp && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-gradient-to-br from-gray-900 to-black border border-purple-500/30 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="p-6 border-b border-purple-500/20 bg-gradient-to-r from-purple-500/10 to-pink-500/10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full flex items-center justify-center">
+                    <span className="text-xl">🚀</span>
+                  </div>
+                  <div>
+                    <h2 className={`text-2xl font-bold text-white ${daydream.className}`}>
+                      Enable Devnet in Phantom Wallet
+                    </h2>
+                    <p className="text-purple-200">
+                      Follow these steps to enable devnet transactions
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowDevnetHelp(false)}
+                  className="w-8 h-8 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors"
+                >
+                  <svg
+                    className="w-4 h-4 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Step 1 */}
+                <div className="bg-gradient-to-br from-white/5 to-white/10 rounded-xl p-4 border border-white/10">
+                  <h3 className={`text-lg font-bold text-white mb-3 ${daydream.className}`}>
+                    Step 1: Open Settings
+                  </h3>
+                  <div className="aspect-video bg-gray-700 rounded-lg mb-3 flex items-center justify-center">
+                    <Image
+                      src="/phantom-step1.png"
+                      alt="Open Phantom Settings"
+                      width={300}
+                      height={200}
+                      className="rounded-lg object-contain"
+                      placeholder="blur"
+                      blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                    />
+                  </div>
+                  <p className="text-gray-300 text-sm">
+                    Click the settings icon in your Phantom wallet to access developer options.
+                  </p>
+                </div>
+
+                {/* Step 2 */}
+                <div className="bg-gradient-to-br from-white/5 to-white/10 rounded-xl p-4 border border-white/10">
+                  <h3 className={`text-lg font-bold text-white mb-3 ${daydream.className}`}>
+                    Step 2: Find Developer Settings
+                  </h3>
+                  <div className="aspect-video bg-gray-700 rounded-lg mb-3 flex items-center justify-center">
+                    <Image
+                      src="/phantom-step2.png"
+                      alt="Find Developer Settings"
+                      width={300}
+                      height={200}
+                      className="rounded-lg object-contain"
+                      placeholder="blur"
+                      blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                    />
+                  </div>
+                  <p className="text-gray-300 text-sm">
+                    Scroll down to find the &quot;Developer Settings&quot; or &quot;Advanced&quot;
+                    section.
+                  </p>
+                </div>
+
+                {/* Step 3 */}
+                <div className="bg-gradient-to-br from-white/5 to-white/10 rounded-xl p-4 border border-white/10">
+                  <h3 className={`text-lg font-bold text-white mb-3 ${daydream.className}`}>
+                    Step 3: Change Network
+                  </h3>
+                  <div className="aspect-video bg-gray-700 rounded-lg mb-3 flex items-center justify-center">
+                    <Image
+                      src="/phantom-step3.png"
+                      alt="Change Network to Devnet"
+                      width={300}
+                      height={200}
+                      className="rounded-lg object-contain"
+                      placeholder="blur"
+                      blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                    />
+                  </div>
+                  <p className="text-gray-300 text-sm">
+                    Select &quot;Devnet&quot; from the network dropdown menu instead of
+                    &quot;Mainnet&quot;.
+                  </p>
+                </div>
+
+                {/* Step 4 */}
+                <div className="bg-gradient-to-br from-white/5 to-white/10 rounded-xl p-4 border border-white/10">
+                  <h3 className={`text-lg font-bold text-white mb-3 ${daydream.className}`}>
+                    Step 4: Confirm & Test
+                  </h3>
+                  <div className="aspect-video bg-gray-700 rounded-lg mb-3 flex items-center justify-center">
+                    <Image
+                      src="/phantom-step4.png"
+                      alt="Confirm Devnet Setup"
+                      width={300}
+                      height={200}
+                      className="rounded-lg object-contain"
+                      placeholder="blur"
+                      blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                    />
+                  </div>
+                  <p className="text-gray-300 text-sm">
+                    Reconnect your wallet to the site. You should now see &quot;Devnet&quot; in your
+                    wallet.
+                  </p>
+                </div>
+              </div>
+
+              {/* Additional Info */}
+              <div className="mt-6 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-xl p-4">
+                <h3 className={`text-lg font-bold text-white mb-2 ${daydream.className}`}>
+                  💡 Pro Tip
+                </h3>
+                <p className="text-gray-300 text-sm">
+                  You can get free devnet SOL from the{' '}
+                  <a
+                    href="https://faucet.solana.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-purple-400 hover:text-purple-300 underline"
+                  >
+                    Solana Faucet
+                  </a>{' '}
+                  to test games. Remember to switch back to Mainnet when you&apos;re done testing!
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

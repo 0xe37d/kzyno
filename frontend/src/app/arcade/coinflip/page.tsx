@@ -24,6 +24,47 @@ export default function CoinFlip() {
   const [currentSide, setCurrentSide] = useState<CoinSide>('heads')
   const flipIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
+  // Audio refs
+  const coinAudioRef = useRef<HTMLAudioElement | null>(null)
+  const goodAudioRef = useRef<HTMLAudioElement | null>(null)
+  const badAudioRef = useRef<HTMLAudioElement | null>(null)
+
+  // Initialize audio elements
+  useEffect(() => {
+    coinAudioRef.current = new Audio('/audio/coin.mp3')
+    goodAudioRef.current = new Audio('/audio/good.mp3')
+    badAudioRef.current = new Audio('/audio/bad.mp3')
+
+    // Set audio properties
+    if (coinAudioRef.current) {
+      coinAudioRef.current.loop = true
+      coinAudioRef.current.volume = 0.6
+      coinAudioRef.current.playbackRate = 0.5 // Slow down to half speed
+    }
+    if (goodAudioRef.current) {
+      goodAudioRef.current.volume = 0.8
+    }
+    if (badAudioRef.current) {
+      badAudioRef.current.volume = 0.8
+    }
+
+    // Cleanup function
+    return () => {
+      if (coinAudioRef.current) {
+        coinAudioRef.current.pause()
+        coinAudioRef.current = null
+      }
+      if (goodAudioRef.current) {
+        goodAudioRef.current.pause()
+        goodAudioRef.current = null
+      }
+      if (badAudioRef.current) {
+        badAudioRef.current.pause()
+        badAudioRef.current = null
+      }
+    }
+  }, [])
+
   const fetchBalance = async (casinoClient: CasinoClient) => {
     try {
       const koins = await casinoClient.get_koins()
@@ -67,6 +108,16 @@ export default function CoinFlip() {
       // Heads = 0° (flat), Tails = 180° (flipped)
       const finalPosition = coinResult === 'heads' ? 0 : 180
       const totalRotation = (baseRotations + randomExtra) * 360 + finalPosition
+
+      // Start playing coin flip audio
+      try {
+        if (coinAudioRef.current) {
+          coinAudioRef.current.currentTime = 0 // Reset to beginning
+          await coinAudioRef.current.play()
+        }
+      } catch (error) {
+        console.log('Coin audio play failed:', error) // Some browsers block autoplay
+      }
 
       // Cubic bezier function matching CSS: cubic-bezier(0.25, 0.46, 0.45, 0.94)
       const cubicBezier = (t: number) => {
@@ -120,6 +171,11 @@ export default function CoinFlip() {
           clearInterval(flipIntervalRef.current)
         }
 
+        // Stop coin flip audio
+        if (coinAudioRef.current) {
+          coinAudioRef.current.pause()
+        }
+
         // Set final side based on result
         setCurrentSide(coinResult)
 
@@ -129,9 +185,28 @@ export default function CoinFlip() {
           won: result.won,
         })
 
-        // Credit winnings if won
+        // Credit winnings if won and play appropriate audio
         if (result.won) {
           setBalance((prev) => prev + betAmount * 2)
+          // Play win audio
+          try {
+            if (goodAudioRef.current) {
+              goodAudioRef.current.currentTime = 0
+              goodAudioRef.current.play()
+            }
+          } catch (error) {
+            console.log('Win audio play failed:', error)
+          }
+        } else {
+          // Play loss audio
+          try {
+            if (badAudioRef.current) {
+              badAudioRef.current.currentTime = 0
+              badAudioRef.current.play()
+            }
+          } catch (error) {
+            console.log('Loss audio play failed:', error)
+          }
         }
 
         setIsFlipping(false)

@@ -88,6 +88,46 @@ export default function HorseRacing() {
   const [finalPositions, setFinalPositions] = useState<number[]>([])
   const raceTimer = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  // Audio refs
+  const horsesAudioRef = useRef<HTMLAudioElement | null>(null)
+  const goodAudioRef = useRef<HTMLAudioElement | null>(null)
+  const badAudioRef = useRef<HTMLAudioElement | null>(null)
+
+  // Initialize audio elements
+  useEffect(() => {
+    horsesAudioRef.current = new Audio('/audio/horses.mp3')
+    goodAudioRef.current = new Audio('/audio/good.mp3')
+    badAudioRef.current = new Audio('/audio/bad.mp3')
+
+    // Set audio properties
+    if (horsesAudioRef.current) {
+      horsesAudioRef.current.loop = true
+      horsesAudioRef.current.volume = 0.6
+    }
+    if (goodAudioRef.current) {
+      goodAudioRef.current.volume = 0.8
+    }
+    if (badAudioRef.current) {
+      badAudioRef.current.volume = 0.8
+    }
+
+    // Cleanup function
+    return () => {
+      if (horsesAudioRef.current) {
+        horsesAudioRef.current.pause()
+        horsesAudioRef.current = null
+      }
+      if (goodAudioRef.current) {
+        goodAudioRef.current.pause()
+        goodAudioRef.current = null
+      }
+      if (badAudioRef.current) {
+        badAudioRef.current.pause()
+        badAudioRef.current = null
+      }
+    }
+  }, [])
+
   const fetchBalance = async (casinoClient: CasinoClient) => {
     try {
       const koins = await casinoClient.get_koins()
@@ -132,6 +172,16 @@ export default function HorseRacing() {
       return
     }
 
+    // Start playing horses audio
+    try {
+      if (horsesAudioRef.current) {
+        horsesAudioRef.current.currentTime = 0 // Reset to beginning
+        await horsesAudioRef.current.play()
+      }
+    } catch (error) {
+      console.log('Audio play failed:', error) // Some browsers block autoplay
+    }
+
     // Reset horse positions
     setHorses((prevHorses) =>
       prevHorses.map((horse) => ({
@@ -173,9 +223,30 @@ export default function HorseRacing() {
               [...prevHorses].sort((a, b) => b.position - a.position).map((h) => h.id)
             )
 
-            if (selectedHorse === serverWinner) {
-              setBalance((prev) => prev + betAmount * 3)
+            // Stop horses audio
+            if (horsesAudioRef.current) {
+              horsesAudioRef.current.pause()
             }
+
+            // Play win/loss audio with a small delay
+            setTimeout(() => {
+              try {
+                if (selectedHorse === serverWinner) {
+                  setBalance((prev) => prev + betAmount * 3)
+                  if (goodAudioRef.current) {
+                    goodAudioRef.current.currentTime = 0
+                    goodAudioRef.current.play()
+                  }
+                } else {
+                  if (badAudioRef.current) {
+                    badAudioRef.current.currentTime = 0
+                    badAudioRef.current.play()
+                  }
+                }
+              } catch (error) {
+                console.log('Result audio play failed:', error)
+              }
+            }, 500) // 500ms delay for dramatic effect
 
             if (raceTimer.current) clearInterval(raceTimer.current)
           }

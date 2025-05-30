@@ -8,11 +8,13 @@ import { MessageSignerWalletAdapter } from '@solana/wallet-adapter-base'
 interface CasinoContextType {
   casinoClient: CasinoClient | null
   isConnected: boolean
+  cluster: string
 }
 
 const CasinoContext = createContext<CasinoContextType>({
   casinoClient: null,
   isConnected: false,
+  cluster: '',
 })
 
 export function CasinoProvider({ children, cluster }: { children: ReactNode; cluster: string }) {
@@ -34,7 +36,7 @@ export function CasinoProvider({ children, cluster }: { children: ReactNode; clu
   }, [wallet, otherWallet, cluster])
 
   return (
-    <CasinoContext.Provider value={{ casinoClient, isConnected: otherWallet.connected }}>
+    <CasinoContext.Provider value={{ casinoClient, isConnected: otherWallet.connected, cluster }}>
       {children}
     </CasinoContext.Provider>
   )
