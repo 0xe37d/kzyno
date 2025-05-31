@@ -79,7 +79,7 @@ export class CasinoClient {
     try {
       const userBalanceAccount = await this.program.account.userBalance.fetch(this.userBalancePda)
       const sol = Number(userBalanceAccount.balance) / 1e9
-      return sol * KOINS_PER_SOL
+      return Math.round(sol * KOINS_PER_SOL)
     } catch {
       return 0
     }
