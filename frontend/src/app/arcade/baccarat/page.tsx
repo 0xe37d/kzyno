@@ -1,11 +1,13 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { daydream } from '../../fonts'
 import Image from 'next/image'
 import { useCasino } from '@/contexts/CasinoContext'
 import { CasinoClient } from '@/lib/casino-client'
+import { useAudio } from '@/contexts/SettingsContext'
+import SettingsMenu from '@/components/SettingsMenu'
 
 type Suit = 'hearts' | 'diamonds' | 'spades' | 'clubs'
 type Value = '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K' | 'A'
@@ -41,44 +43,10 @@ export default function Baccarat() {
   const [gameResult, setGameResult] = useState<BaccaratResult | null>(null)
   const [dealingCard, setDealingCard] = useState<number>(0) // 0-6 for dealing sequence
 
-  // Audio refs
-  const dealAudioRef = useRef<HTMLAudioElement | null>(null)
-  const goodAudioRef = useRef<HTMLAudioElement | null>(null)
-  const badAudioRef = useRef<HTMLAudioElement | null>(null)
-
-  // Initialize audio elements
-  useEffect(() => {
-    dealAudioRef.current = new Audio('/audio/deal.mp3')
-    goodAudioRef.current = new Audio('/audio/good.mp3')
-    badAudioRef.current = new Audio('/audio/bad.mp3')
-
-    // Set audio properties
-    if (dealAudioRef.current) {
-      dealAudioRef.current.volume = 0.5
-    }
-    if (goodAudioRef.current) {
-      goodAudioRef.current.volume = 0.8
-    }
-    if (badAudioRef.current) {
-      badAudioRef.current.volume = 0.8
-    }
-
-    // Cleanup function
-    return () => {
-      if (dealAudioRef.current) {
-        dealAudioRef.current.pause()
-        dealAudioRef.current = null
-      }
-      if (goodAudioRef.current) {
-        goodAudioRef.current.pause()
-        goodAudioRef.current = null
-      }
-      if (badAudioRef.current) {
-        badAudioRef.current.pause()
-        badAudioRef.current = null
-      }
-    }
-  }, [])
+  // Audio hooks using settings
+  const dealAudio = useAudio('/audio/deal.mp3', { volume: 0.5 })
+  const goodAudio = useAudio('/audio/good.mp3', { volume: 0.8 })
+  const badAudio = useAudio('/audio/bad.mp3', { volume: 0.8 })
 
   const fetchBalance = async (casinoClient: CasinoClient) => {
     try {
@@ -188,14 +156,7 @@ export default function Baccarat() {
   }
 
   const playDealSound = () => {
-    try {
-      if (dealAudioRef.current) {
-        dealAudioRef.current.currentTime = 0
-        dealAudioRef.current.play()
-      }
-    } catch (error) {
-      console.log('Deal audio play failed:', error)
-    }
+    dealAudio.play()
   }
 
   const handleDeal = async () => {
@@ -281,23 +242,9 @@ export default function Baccarat() {
               // Handle winnings and audio
               if (result.won) {
                 setBalance((prev) => prev + betAmount * multiplier)
-                try {
-                  if (goodAudioRef.current) {
-                    goodAudioRef.current.currentTime = 0
-                    goodAudioRef.current.play()
-                  }
-                } catch (error) {
-                  console.log('Win audio play failed:', error)
-                }
+                goodAudio.play()
               } else {
-                try {
-                  if (badAudioRef.current) {
-                    badAudioRef.current.currentTime = 0
-                    badAudioRef.current.play()
-                  }
-                } catch (error) {
-                  console.log('Loss audio play failed:', error)
-                }
+                badAudio.play()
               }
             }, 1000)
           }
@@ -430,7 +377,12 @@ export default function Baccarat() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#0f5132]">
         <h1 className={`text-2xl text-white mb-4 ${daydream.className}`}>
-          Please connect your wallet to play
+          <Link
+            href="/arcade/dashboard"
+            className="text-green-200 hover:text-green-300 underline-offset-[14px] underline"
+          >
+            Please connect your wallet to play
+          </Link>
         </h1>
       </div>
     )
@@ -458,6 +410,9 @@ export default function Baccarat() {
 
       {/* Decorative border */}
       <div className="absolute inset-4 border-2 border-yellow-500/20 rounded-lg" />
+
+      {/* Settings Menu */}
+      <SettingsMenu />
 
       <nav className="fixed top-0 right-0 p-4 md:p-6 z-10">
         <div className="flex gap-4">

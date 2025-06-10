@@ -8,16 +8,22 @@ import { MessageSignerWalletAdapter } from '@solana/wallet-adapter-base'
 interface CasinoContextType {
   casinoClient: CasinoClient | null
   isConnected: boolean
-  cluster: string
+  cluster: 'devnet' | 'mainnet-beta' | 'localhost'
 }
 
 const CasinoContext = createContext<CasinoContextType>({
   casinoClient: null,
   isConnected: false,
-  cluster: '',
+  cluster: 'devnet',
 })
 
-export function CasinoProvider({ children, cluster }: { children: ReactNode; cluster: string }) {
+export function CasinoProvider({
+  children,
+  cluster,
+}: {
+  children: ReactNode
+  cluster: 'devnet' | 'mainnet-beta' | 'localhost'
+}) {
   const wallet = useAnchorWallet()
   const otherWallet = useWallet()
   const [casinoClient, setCasinoClient] = useState<CasinoClient | null>(null)
@@ -25,12 +31,22 @@ export function CasinoProvider({ children, cluster }: { children: ReactNode; clu
   useEffect(() => {
     if (!wallet?.publicKey || !wallet || !otherWallet?.wallet?.adapter) return
 
-    const connection = new Connection(cluster)
+    let clusterEndpoint: string
+    if (cluster === 'devnet') {
+      clusterEndpoint = 'https://api.devnet.solana.com'
+    } else if (cluster === 'localhost') {
+      clusterEndpoint = 'http://127.0.0.1:8899'
+    } else {
+      clusterEndpoint = 'https://api.mainnet-beta.solana.com'
+    }
+
+    const connection = new Connection(clusterEndpoint)
     setCasinoClient(
       new CasinoClient(
         connection,
         wallet as AnchorWallet,
-        otherWallet.wallet.adapter as MessageSignerWalletAdapter
+        otherWallet.wallet.adapter as MessageSignerWalletAdapter,
+        cluster
       )
     )
   }, [wallet, otherWallet, cluster])

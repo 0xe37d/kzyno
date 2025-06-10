@@ -41,9 +41,16 @@ export class CasinoClient {
   private userLiquidityPda: PublicKey | null = null
   private adapter: MessageSignerWalletAdapter
   private isAuthenticated: boolean = false
+  private cluster: 'devnet' | 'mainnet-beta' | 'localhost'
 
-  constructor(connection: Connection, wallet: AnchorWallet, adapter: MessageSignerWalletAdapter) {
+  constructor(
+    connection: Connection,
+    wallet: AnchorWallet,
+    adapter: MessageSignerWalletAdapter,
+    cluster: 'devnet' | 'mainnet-beta' | 'localhost'
+  ) {
     this.connection = connection
+    this.cluster = cluster
     this.provider = new AnchorProvider(this.connection, wallet, {})
     setProvider(this.provider)
     this.program = new Program(idl as Kzyno, this.provider) as Program<Kzyno>
@@ -212,7 +219,7 @@ export class CasinoClient {
         body: JSON.stringify({
           bet: betLamports,
           multiplier,
-          cluster: this.connection.rpcEndpoint,
+          cluster: this.cluster,
         }),
       })
 

@@ -15,7 +15,8 @@ import { jwtVerify } from 'jose'
 const PROGRAM_ID = new PublicKey(idl.address) // <- from idl
 const ADMIN_KEY = JSON.parse(process.env.ADMIN_PRIVATE_KEY!) // `[1,2,3,..]`
 const JWT_SECRET = process.env.JWT_SECRET
-const DEVNET_RPC_URL = process.env.DEVNET_RPC_URL
+const DEVNET_RPC_URL = process.env.DEVNET_RPC_URL || 'https://api.devnet.solana.com'
+const MAINNET_RPC_URL = process.env.MAINNET_RPC_URL || 'https://api.mainnet-beta.solana.com'
 
 export const runtime = 'edge'
 
@@ -82,8 +83,18 @@ export async function POST(request: NextRequest) {
     /* 1. admin signer ---------------------------------------------------- */
     const adminKeypair = Keypair.fromSecretKey(Uint8Array.from(ADMIN_KEY))
 
+    let clusterEndpoint: string
+
+    if (cluster === 'devnet') {
+      clusterEndpoint = DEVNET_RPC_URL
+    } else if (cluster === 'localhost') {
+      clusterEndpoint = 'http://127.0.0.1:8899'
+    } else {
+      clusterEndpoint = MAINNET_RPC_URL
+    }
+
     /* 2. connection (HTTP fetch, works in workers) ----------------------- */
-    const connection = new Connection(cluster.includes('devnet') ? DEVNET_RPC_URL : cluster, {
+    const connection = new Connection(clusterEndpoint, {
       commitment: 'confirmed',
       wsEndpoint: undefined, // <- prevents any WebSocket attempt
     })

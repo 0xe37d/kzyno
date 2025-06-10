@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { daydream } from '../../fonts'
 import { useCasino } from '@/contexts/CasinoContext'
 import { CasinoClient } from '@/lib/casino-client'
+import { useAudio } from '@/contexts/SettingsContext'
+import SettingsMenu from '@/components/SettingsMenu'
 
 type CoinSide = 'heads' | 'tails'
 
@@ -24,46 +26,17 @@ export default function CoinFlip() {
   const [currentSide, setCurrentSide] = useState<CoinSide>('heads')
   const flipIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Audio refs
-  const coinAudioRef = useRef<HTMLAudioElement | null>(null)
-  const goodAudioRef = useRef<HTMLAudioElement | null>(null)
-  const badAudioRef = useRef<HTMLAudioElement | null>(null)
+  // Audio hooks using settings
+  const coinAudio = useAudio('/audio/coin.mp3', { volume: 0.6, loop: true })
+  const goodAudio = useAudio('/audio/good.mp3', { volume: 0.8 })
+  const badAudio = useAudio('/audio/bad.mp3', { volume: 0.8 })
 
-  // Initialize audio elements
+  // Set coin audio playback rate to 0.5x speed
   useEffect(() => {
-    coinAudioRef.current = new Audio('/audio/coin.mp3')
-    goodAudioRef.current = new Audio('/audio/good.mp3')
-    badAudioRef.current = new Audio('/audio/bad.mp3')
-
-    // Set audio properties
-    if (coinAudioRef.current) {
-      coinAudioRef.current.loop = true
-      coinAudioRef.current.volume = 0.6
-      coinAudioRef.current.playbackRate = 0.5 // Slow down to half speed
+    if (coinAudio.audio) {
+      coinAudio.audio.playbackRate = 0.5
     }
-    if (goodAudioRef.current) {
-      goodAudioRef.current.volume = 0.8
-    }
-    if (badAudioRef.current) {
-      badAudioRef.current.volume = 0.8
-    }
-
-    // Cleanup function
-    return () => {
-      if (coinAudioRef.current) {
-        coinAudioRef.current.pause()
-        coinAudioRef.current = null
-      }
-      if (goodAudioRef.current) {
-        goodAudioRef.current.pause()
-        goodAudioRef.current = null
-      }
-      if (badAudioRef.current) {
-        badAudioRef.current.pause()
-        badAudioRef.current = null
-      }
-    }
-  }, [])
+  }, [coinAudio.audio])
 
   const fetchBalance = async (casinoClient: CasinoClient) => {
     try {
@@ -110,14 +83,7 @@ export default function CoinFlip() {
       const totalRotation = (baseRotations + randomExtra) * 360 + finalPosition
 
       // Start playing coin flip audio
-      try {
-        if (coinAudioRef.current) {
-          coinAudioRef.current.currentTime = 0 // Reset to beginning
-          await coinAudioRef.current.play()
-        }
-      } catch (error) {
-        console.log('Coin audio play failed:', error) // Some browsers block autoplay
-      }
+      coinAudio.play()
 
       // Cubic bezier function matching CSS: cubic-bezier(0.25, 0.46, 0.45, 0.94)
       const cubicBezier = (t: number) => {
@@ -172,9 +138,7 @@ export default function CoinFlip() {
         }
 
         // Stop coin flip audio
-        if (coinAudioRef.current) {
-          coinAudioRef.current.pause()
-        }
+        coinAudio.pause()
 
         // Set final side based on result
         setCurrentSide(coinResult)
@@ -188,25 +152,9 @@ export default function CoinFlip() {
         // Credit winnings if won and play appropriate audio
         if (result.won) {
           setBalance((prev) => prev + betAmount * 2)
-          // Play win audio
-          try {
-            if (goodAudioRef.current) {
-              goodAudioRef.current.currentTime = 0
-              goodAudioRef.current.play()
-            }
-          } catch (error) {
-            console.log('Win audio play failed:', error)
-          }
+          goodAudio.play()
         } else {
-          // Play loss audio
-          try {
-            if (badAudioRef.current) {
-              badAudioRef.current.currentTime = 0
-              badAudioRef.current.play()
-            }
-          } catch (error) {
-            console.log('Loss audio play failed:', error)
-          }
+          badAudio.play()
         }
 
         setIsFlipping(false)
@@ -231,7 +179,12 @@ export default function CoinFlip() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#1a472a]">
         <h1 className={`text-2xl text-white mb-4 ${daydream.className}`}>
-          Please connect your wallet to play
+          <Link
+            href="/arcade/dashboard"
+            className="text-green-200 hover:text-green-300 underline-offset-[14px] underline"
+          >
+            Please connect your wallet to play
+          </Link>
         </h1>
       </div>
     )
@@ -265,6 +218,9 @@ export default function CoinFlip() {
       <div className="absolute top-0 right-0 w-32 h-32 bg-[#ffd700]/5 rounded-bl-full" />
       <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#ffd700]/5 rounded-tr-full" />
       <div className="absolute bottom-0 right-0 w-32 h-32 bg-[#ffd700]/5 rounded-tl-full" />
+
+      {/* Settings Menu */}
+      <SettingsMenu />
 
       <nav className="fixed top-0 right-0 p-4 md:p-6 z-10">
         <div className="flex gap-4">

@@ -1,11 +1,13 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { daydream } from '../../fonts'
 import Image from 'next/image'
 import { useCasino } from '@/contexts/CasinoContext'
 import { CasinoClient } from '@/lib/casino-client'
+import { useAudio } from '@/contexts/SettingsContext'
+import SettingsMenu from '@/components/SettingsMenu'
 
 type GameResult = 'survived' | 'dead' | null
 
@@ -23,63 +25,12 @@ export default function RussianRoulette() {
   const [currentImage, setCurrentImage] = useState('standing')
   const [showMuzzleFlash, setShowMuzzleFlash] = useState(false)
 
-  // Audio refs
-  const spinAudioRef = useRef<HTMLAudioElement | null>(null)
-  const shotAudioRef = useRef<HTMLAudioElement | null>(null)
-  const emptyAudioRef = useRef<HTMLAudioElement | null>(null)
-  const goodAudioRef = useRef<HTMLAudioElement | null>(null)
-  const badAudioRef = useRef<HTMLAudioElement | null>(null)
-
-  // Initialize audio elements
-  useEffect(() => {
-    spinAudioRef.current = new Audio('/audio/spin.mp3')
-    shotAudioRef.current = new Audio('/audio/shot.mp3')
-    emptyAudioRef.current = new Audio('/audio/empty.mp3')
-    goodAudioRef.current = new Audio('/audio/good.mp3')
-    badAudioRef.current = new Audio('/audio/bad.mp3')
-
-    // Set audio properties
-    if (spinAudioRef.current) {
-      spinAudioRef.current.volume = 0.6
-      spinAudioRef.current.loop = true
-    }
-    if (shotAudioRef.current) {
-      shotAudioRef.current.volume = 0.7
-    }
-    if (emptyAudioRef.current) {
-      emptyAudioRef.current.volume = 0.7
-    }
-    if (goodAudioRef.current) {
-      goodAudioRef.current.volume = 0.8
-    }
-    if (badAudioRef.current) {
-      badAudioRef.current.volume = 0.8
-    }
-
-    // Cleanup function
-    return () => {
-      if (spinAudioRef.current) {
-        spinAudioRef.current.pause()
-        spinAudioRef.current = null
-      }
-      if (shotAudioRef.current) {
-        shotAudioRef.current.pause()
-        shotAudioRef.current = null
-      }
-      if (emptyAudioRef.current) {
-        emptyAudioRef.current.pause()
-        emptyAudioRef.current = null
-      }
-      if (goodAudioRef.current) {
-        goodAudioRef.current.pause()
-        goodAudioRef.current = null
-      }
-      if (badAudioRef.current) {
-        badAudioRef.current.pause()
-        badAudioRef.current = null
-      }
-    }
-  }, [])
+  // Audio hooks using settings
+  const spinAudio = useAudio('/audio/spin.mp3', { volume: 0.6, loop: true })
+  const shotAudio = useAudio('/audio/shot.mp3', { volume: 0.7 })
+  const emptyAudio = useAudio('/audio/empty.mp3', { volume: 0.7 })
+  const goodAudio = useAudio('/audio/good.mp3', { volume: 0.8 })
+  const badAudio = useAudio('/audio/bad.mp3', { volume: 0.8 })
 
   const fetchBalance = async (casinoClient: CasinoClient) => {
     try {
@@ -114,39 +65,20 @@ export default function RussianRoulette() {
       const gameOutcome: GameResult = result.won ? 'survived' : 'dead'
 
       // Start playing cylinder spin sound during suspense
-      try {
-        if (spinAudioRef.current) {
-          spinAudioRef.current.currentTime = 0
-          spinAudioRef.current.play()
-        }
-      } catch (error) {
-        console.log('Spin audio play failed:', error)
-      }
+      spinAudio.play()
 
       // Dramatic pause before shot
       setTimeout(() => {
         // Stop spin sound
-        if (spinAudioRef.current) {
-          spinAudioRef.current.pause()
-        }
+        spinAudio.stop()
 
         // Play appropriate gun sound based on outcome
-        try {
-          if (gameOutcome === 'dead') {
-            // Gun fires - play shot sound
-            if (shotAudioRef.current) {
-              shotAudioRef.current.currentTime = 0
-              shotAudioRef.current.play()
-            }
-          } else {
-            // Gun is empty - play empty chamber sound
-            if (emptyAudioRef.current) {
-              emptyAudioRef.current.currentTime = 0
-              emptyAudioRef.current.play()
-            }
-          }
-        } catch (error) {
-          console.log('Gun audio play failed:', error)
+        if (gameOutcome === 'dead') {
+          // Gun fires - play shot sound
+          shotAudio.play()
+        } else {
+          // Gun is empty - play empty chamber sound
+          emptyAudio.play()
         }
 
         // Show muzzle flash effect only if shot fired
@@ -180,23 +112,9 @@ export default function RussianRoulette() {
           setTimeout(() => {
             if (result.won) {
               setBalance((prev) => prev + betAmount * 6)
-              try {
-                if (goodAudioRef.current) {
-                  goodAudioRef.current.currentTime = 0
-                  goodAudioRef.current.play()
-                }
-              } catch (error) {
-                console.log('Win audio play failed:', error)
-              }
+              goodAudio.play()
             } else {
-              try {
-                if (badAudioRef.current) {
-                  badAudioRef.current.currentTime = 0
-                  badAudioRef.current.play()
-                }
-              } catch (error) {
-                console.log('Loss audio play failed:', error)
-              }
+              badAudio.play()
             }
           }, 1000) // Delay for dramatic effect
 
@@ -206,9 +124,7 @@ export default function RussianRoulette() {
     } catch (error) {
       console.error('Error placing bet:', error)
       // Stop spin sound on error
-      if (spinAudioRef.current) {
-        spinAudioRef.current.pause()
-      }
+      spinAudio.stop()
       setIsPlaying(false)
     }
   }
@@ -224,7 +140,12 @@ export default function RussianRoulette() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#1a1a1a]">
         <h1 className={`text-2xl text-white mb-4 ${daydream.className}`}>
-          Please connect your wallet to play
+          <Link
+            href="/arcade/dashboard"
+            className="text-green-200 hover:text-green-300 underline-offset-[14px] underline"
+          >
+            Please connect your wallet to play
+          </Link>
         </h1>
       </div>
     )
@@ -252,6 +173,9 @@ export default function RussianRoulette() {
 
       {/* Flickering light effect */}
       <div className="absolute inset-0 bg-red-500/5 animate-pulse" />
+
+      {/* Settings Menu */}
+      <SettingsMenu />
 
       <nav className="fixed top-0 right-0 p-4 md:p-6 z-10">
         <div className="flex gap-4">

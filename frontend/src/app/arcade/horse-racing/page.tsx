@@ -6,6 +6,9 @@ import { daydream } from '../../fonts'
 import Image from 'next/image'
 import { useCasino } from '@/contexts/CasinoContext'
 import { CasinoClient } from '@/lib/casino-client'
+import { useAudio, useSettings } from '@/contexts/SettingsContext'
+import SettingsMenu from '@/components/SettingsMenu'
+import { debounce } from 'lodash'
 
 interface Horse {
   id: number
@@ -19,24 +22,29 @@ interface Horse {
   isRacing: boolean
 }
 
-const RACE_CONSTANTS = {
-  LAPS: 3,
-  TRACK_LEN: 1000,
-
-  /* base motion ---------------------------------------------------------- */
-  V0: 180, // base pack speed
-  SIGMA_JITTER: 2.5,
-  DT: 0.1,
-
-  WINNER_BOOST: 30.0,
-}
-
 export default function HorseRacing() {
   const { casinoClient, isConnected } = useCasino()
+  const { settings } = useSettings()
   const [balance, setBalance] = useState(0)
   const [betAmount, setBetAmount] = useState(10)
   const [selectedHorse, setSelectedHorse] = useState<number | null>(null)
   const [winner, setWinner] = useState<number | null>(null)
+  const RACE_CONSTANTS = {
+    LAPS: 3,
+    TRACK_LEN: 1000,
+
+    /* base motion ---------------------------------------------------------- */
+    V0: settings.horseRaceSpeed === 'normal' ? 180 : settings.horseRaceSpeed === 'fast' ? 240 : 300, // base pack speed
+    SIGMA_JITTER: 2.5,
+    DT: 0.1,
+
+    WINNER_BOOST:
+      settings.horseRaceSpeed === 'normal'
+        ? 30.0
+        : settings.horseRaceSpeed === 'fast'
+          ? 40.0
+          : 50.0,
+  }
   const [horses, setHorses] = useState<Horse[]>([
     {
       id: 0,
@@ -88,45 +96,9 @@ export default function HorseRacing() {
   const [finalPositions, setFinalPositions] = useState<number[]>([])
   const raceTimer = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // Audio refs
-  const horsesAudioRef = useRef<HTMLAudioElement | null>(null)
-  const goodAudioRef = useRef<HTMLAudioElement | null>(null)
-  const badAudioRef = useRef<HTMLAudioElement | null>(null)
-
-  // Initialize audio elements
-  useEffect(() => {
-    horsesAudioRef.current = new Audio('/audio/horses.mp3')
-    goodAudioRef.current = new Audio('/audio/good.mp3')
-    badAudioRef.current = new Audio('/audio/bad.mp3')
-
-    // Set audio properties
-    if (horsesAudioRef.current) {
-      horsesAudioRef.current.loop = true
-      horsesAudioRef.current.volume = 0.6
-    }
-    if (goodAudioRef.current) {
-      goodAudioRef.current.volume = 0.8
-    }
-    if (badAudioRef.current) {
-      badAudioRef.current.volume = 0.8
-    }
-
-    // Cleanup function
-    return () => {
-      if (horsesAudioRef.current) {
-        horsesAudioRef.current.pause()
-        horsesAudioRef.current = null
-      }
-      if (goodAudioRef.current) {
-        goodAudioRef.current.pause()
-        goodAudioRef.current = null
-      }
-      if (badAudioRef.current) {
-        badAudioRef.current.pause()
-        badAudioRef.current = null
-      }
-    }
-  }, [])
+  const horsesAudio = useAudio('/audio/horses.mp3', { volume: 0.6, loop: true })
+  const goodAudio = useAudio('/audio/good.mp3', { volume: 0.8 })
+  const badAudio = useAudio('/audio/bad.mp3', { volume: 0.8 })
 
   const fetchBalance = async (casinoClient: CasinoClient) => {
     try {
@@ -174,10 +146,8 @@ export default function HorseRacing() {
 
     // Start playing horses audio
     try {
-      if (horsesAudioRef.current) {
-        horsesAudioRef.current.currentTime = 0 // Reset to beginning
-        await horsesAudioRef.current.play()
-      }
+      horsesAudio.stop()
+      horsesAudio.play()
     } catch (error) {
       console.log('Audio play failed:', error) // Some browsers block autoplay
     }
@@ -224,24 +194,18 @@ export default function HorseRacing() {
             )
 
             // Stop horses audio
-            if (horsesAudioRef.current) {
-              horsesAudioRef.current.pause()
-            }
+            horsesAudio.stop()
 
             // Play win/loss audio with a small delay
             setTimeout(() => {
               try {
                 if (selectedHorse === serverWinner) {
                   setBalance((prev) => prev + betAmount * 3)
-                  if (goodAudioRef.current) {
-                    goodAudioRef.current.currentTime = 0
-                    goodAudioRef.current.play()
-                  }
+                  goodAudio.stop()
+                  goodAudio.play()
                 } else {
-                  if (badAudioRef.current) {
-                    badAudioRef.current.currentTime = 0
-                    badAudioRef.current.play()
-                  }
+                  badAudio.stop()
+                  badAudio.play()
                 }
               } catch (error) {
                 console.log('Result audio play failed:', error)
@@ -332,7 +296,12 @@ export default function HorseRacing() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#1a472a]">
         <h1 className={`text-2xl text-white mb-4 ${daydream.className}`}>
-          Please connect your wallet to play
+          <Link
+            href="/arcade/dashboard"
+            className="text-green-200 hover:text-green-300 underline-offset-[14px] underline"
+          >
+            Please connect your wallet to play
+          </Link>
         </h1>
       </div>
     )
@@ -360,6 +329,7 @@ export default function HorseRacing() {
         style={{ backgroundRepeat: 'repeat', backgroundSize: '200px' }}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent" />
+      <SettingsMenu />
 
       {/* Decorative corner elements */}
       <div className="absolute top-0 left-0 w-32 h-32 bg-[#ffd700]/5 rounded-br-full" />
@@ -520,7 +490,10 @@ export default function HorseRacing() {
               {horses.map((horse) => (
                 <button
                   key={horse.id}
-                  onClick={() => setSelectedHorse(horse.id)}
+                  onClick={() => {
+                    setHorses((prevHorses) => prevHorses.map((h) => ({ ...h, winner: false })))
+                    setSelectedHorse(horse.id)
+                  }}
                   disabled={!isRaceOver || balance < betAmount}
                   className={`p-2 md:p-3 rounded-lg ${
                     selectedHorse === horse.id
@@ -550,7 +523,7 @@ export default function HorseRacing() {
                 className="w-16 md:w-20 px-2 py-1 bg-white/10 text-white rounded border border-[#ffd700]/20 focus:outline-none focus:border-[#ffd700]/40"
               />
               <button
-                onClick={startRace}
+                onClick={debounce(startRace, 5000, { leading: true, trailing: false })}
                 disabled={selectedHorse === null || !isRaceOver}
                 className={`px-4 md:px-6 py-2 rounded-lg ${
                   selectedHorse === null || !isRaceOver

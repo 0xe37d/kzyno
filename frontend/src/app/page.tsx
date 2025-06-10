@@ -20,17 +20,6 @@ export default function Home() {
     <main
       className={`min-h-screen flex flex-col items-center justify-center p-4 ${daydream.className}`}
     >
-      <nav className="fixed top-0 left-0 p-4 md:p-6">
-        <div className="flex gap-4">
-          <Link
-            href="/arcade/dashboard"
-            className={`text-2xl md:text-3xl text-white hover:text-pink-200 transition-colors ${daydream.className}`}
-          >
-            Dashboard
-          </Link>
-        </div>
-      </nav>
-
       <nav className="fixed top-0 right-0 p-4 md:p-6">
         <div className="flex gap-4">
           <Link
@@ -62,14 +51,23 @@ export default function Home() {
       <p className="mt-6 md:mt-8 text-white text-sm md:text-lg text-center max-w-xs md:max-w-none">
         The Future of Decentralized Gaming
       </p>
-      <button
-        onClick={() => setIsModalOpen(true)}
-        className="mt-8 md:mt-12 px-6 md:px-8 py-3 md:py-4 bg-[#ff69b4] hover:bg-[#ff1493] 
-                   transition-colors rounded-xl md:rounded-2xl text-white text-sm md:text-base
-                   border-2 border-black shadow-[0_0_15px_rgba(255,20,147,0.5)]"
+      <Link
+        // onClick={() => setIsModalOpen(true)}
+        className="mt-8 md:mt-12 px-8 md:px-12 py-4 md:py-5 
+                   bg-gradient-to-r from-[#ff69b4] to-[#ff1493]
+                   hover:from-[#ff1493] hover:to-[#ff69b4]
+                   transition-all duration-300 ease-in-out
+                   rounded-xl md:rounded-2xl text-white 
+                   text-lg md:text-xl font-bold tracking-wide
+                   border-2 border-white/20
+                   shadow-[0_0_30px_rgba(255,20,147,0.6)]
+                   hover:shadow-[0_0_50px_rgba(255,20,147,0.8)]
+                   hover:scale-105 
+                   animate-pulse"
+        href="/arcade/dashboard"
       >
-        Sign Up for Airdrop
-      </button>
+        Connect your wallet to play
+      </Link>
 
       <div className="fixed bottom-0 right-0 p-4 md:p-6">
         <Link
