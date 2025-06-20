@@ -9,6 +9,8 @@ import { CasinoClient } from '@/lib/casino-client'
 import { useAudio, useSettings } from '@/contexts/SettingsContext'
 import SettingsMenu from '@/components/SettingsMenu'
 import { debounce } from 'lodash'
+import GameSetupModal from '@/components/GameSetupModal'
+import { useGameSetup } from '@/hooks/useGameSetup'
 
 interface Horse {
   id: number
@@ -29,6 +31,7 @@ export default function HorseRacing() {
   const [betAmount, setBetAmount] = useState(10)
   const [selectedHorse, setSelectedHorse] = useState<number | null>(null)
   const [winner, setWinner] = useState<number | null>(null)
+  const { isSetupModalOpen, onClose } = useGameSetup()
   const RACE_CONSTANTS = {
     LAPS: 3,
     TRACK_LEN: 1000,
@@ -291,38 +294,10 @@ export default function HorseRacing() {
 
   const isRaceOver = !horses.every((horse) => horse.isRacing)
 
-  // Add wallet connection check
-  if (!isConnected) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#1a472a]">
-        <h1 className={`text-2xl text-white mb-4 ${daydream.className}`}>
-          <Link
-            href="/arcade/dashboard"
-            className="text-green-200 hover:text-green-300 underline-offset-[14px] underline"
-          >
-            Please connect your wallet to play
-          </Link>
-        </h1>
-      </div>
-    )
-  }
-
-  if (balance === 0) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#1a472a]">
-        <h1 className={`text-2xl text-white mb-4 ${daydream.className}`}>
-          Deposit some SOL in the{' '}
-          <Link href="/arcade/dashboard" className="text-pink-200 hover:text-pink-300">
-            casino
-          </Link>{' '}
-          to play
-        </h1>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen flex flex-col bg-[#1a472a] relative overflow-hidden">
+      <GameSetupModal isOpen={isSetupModalOpen} onClose={onClose} />
+
       {/* Casino-style decorative elements */}
       <div
         className="absolute inset-0 bg-[url('/game/felt.jpg')] opacity-20"

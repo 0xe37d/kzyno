@@ -33,11 +33,12 @@ export function CasinoProvider({
 
     let clusterEndpoint: string
     if (cluster === 'devnet') {
-      clusterEndpoint = 'https://api.devnet.solana.com'
+      clusterEndpoint = process.env.NEXT_PUBLIC_DEVNET_RPC_URL || 'https://api.devnet.solana.com'
     } else if (cluster === 'localhost') {
       clusterEndpoint = 'http://127.0.0.1:8899'
     } else {
-      clusterEndpoint = 'https://api.mainnet-beta.solana.com'
+      clusterEndpoint =
+        process.env.NEXT_PUBLIC_MAINNET_RPC_URL || 'https://solana-mainnet.g.alchemy.com/v2/demo'
     }
 
     const connection = new Connection(clusterEndpoint)
@@ -50,6 +51,19 @@ export function CasinoProvider({
       )
     )
   }, [wallet, otherWallet, cluster])
+
+  // Handle wallet disconnection - logout and clear casino client
+  useEffect(() => {
+    if (!otherWallet.connected && casinoClient) {
+      // Call logout to delete authentication cookie
+      casinoClient.logout().catch((error) => {
+        console.error('Error during logout:', error)
+      })
+
+      // Clear casino client
+      setCasinoClient(null)
+    }
+  }, [otherWallet.connected, casinoClient])
 
   return (
     <CasinoContext.Provider value={{ casinoClient, isConnected: otherWallet.connected, cluster }}>

@@ -29,7 +29,6 @@ export default function CasinoTest() {
   const [multiplier, setMultiplier] = useState<number>(2)
   const [playResult, setPlayResult] = useState<{ won: boolean; amount_change: number } | null>(null)
   const [depositAmount, setDepositAmount] = useState<number>(1000)
-  const [withdrawAmount, setWithdrawAmount] = useState<number>(100)
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [casinoDepositAmount, setCasinoDepositAmount] = useState<number>(0.1) // in SOL
@@ -59,7 +58,7 @@ export default function CasinoTest() {
   // Helper functions to determine user state
   const hasSol = balance.sol > 0
   const hasCasinoBalance = balance.casino > 0
-  // const hasLiquidity = balance.token > 0
+  const hasLiquidity = balance.token > 0
 
   const handlePlay = async () => {
     if (!casinoClient) {
@@ -128,7 +127,7 @@ export default function CasinoTest() {
     try {
       setLoading(true)
       setError(null)
-      await casinoClient.withdraw(withdrawAmount)
+      await casinoClient.withdraw(0) // 0 means withdraw all liquidity
 
       // Refresh balance after withdrawal
       const bal = await casinoClient.get_balance()
@@ -364,33 +363,65 @@ export default function CasinoTest() {
             </button>
           </div>
 
-          {/* Liquidity Section - Secondary */}
-          <div className="mt-12 bg-gray-800 p-6 rounded-lg">
-            <h3 className={`text-xl font-bold mb-4 ${daydream.className}`}>
-              Provide Liquidity (Optional)
-            </h3>
-            <p className="text-gray-400 mb-4 text-sm">
-              Deposit liquidity to earn a share of the casino&apos;s profits
-            </p>
+          {/* Liquidity Management Section */}
+          <div className="bg-gray-800 p-6 rounded-lg">
+            <h2 className={`text-xl font-bold mb-4 ${daydream.className}`}>Liquidity Management</h2>
 
-            <div className="mb-4">
-              <label className="block text-gray-300 mb-2">Deposit Amount (SOL):</label>
-              <input
-                type="number"
-                value={depositAmount}
-                onChange={(e) => setDepositAmount(Number(e.target.value))}
-                className="w-full bg-gray-700 text-white p-2 rounded"
-                min="1"
-              />
-            </div>
+            {hasLiquidity ? (
+              <>
+                {/* User has liquidity - show withdraw option and profit stats */}
+                <div className="mb-4">
+                  <h3 className="font-bold mb-2 text-green-400">Your Liquidity Provider Stats:</h3>
+                  <p className="text-gray-300">
+                    Liquidity provided: {(balance.token / 1e9).toFixed(3)} SOL
+                  </p>
+                  {status && (
+                    <p className="text-gray-300">
+                      Your share of profits: {status.profit_share.toFixed(3)} SOL
+                    </p>
+                  )}
+                </div>
 
-            <button
-              onClick={handleDeposit}
-              disabled={loading || !casinoClient}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded disabled:opacity-50"
-            >
-              {loading ? 'Processing...' : 'Provide Liquidity'}
-            </button>
+                <p className="text-gray-400 mb-4 text-md">
+                  Withdraw all your liquidity and accumulated profits from the casino.
+                </p>
+
+                <button
+                  onClick={handleWithdraw}
+                  disabled={loading || !casinoClient}
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white py-3 rounded font-bold disabled:opacity-50"
+                >
+                  {loading ? 'Processing...' : 'Withdraw All Liquidity + Profits!'}
+                </button>
+              </>
+            ) : (
+              <>
+                {/* User has no liquidity - show deposit option */}
+                <p className="text-gray-400 mb-4 text-md">
+                  Deposit SOL to provide liquidity to the casino. This entitles you to a share of
+                  kzyno&apos;s profits.
+                </p>
+
+                <div className="mb-4">
+                  <label className="block text-gray-300 mb-2">Deposit Amount (SOL):</label>
+                  <input
+                    type="number"
+                    value={depositAmount}
+                    onChange={(e) => setDepositAmount(Number(e.target.value))}
+                    className="w-full bg-gray-700 text-white p-2 rounded"
+                    min="1"
+                  />
+                </div>
+
+                <button
+                  onClick={handleDeposit}
+                  disabled={loading || !casinoClient}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white py-3 rounded font-bold disabled:opacity-50"
+                >
+                  {loading ? 'Processing...' : 'Deposit Liquidity'}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -510,15 +541,6 @@ export default function CasinoTest() {
             {status && (
               <>
                 <div className="mb-4">
-                  <h3 className="font-bold mb-2">Your liquidity provider stats:</h3>
-                  <p className="text-gray-300">
-                    Liquidity provided: {(balance.token / 1e9).toFixed(3)} SOL
-                  </p>
-                  <p className="text-gray-300">
-                    Your share of profits: {status?.profit_share.toFixed(3)} SOL
-                  </p>
-                </div>
-                <div className="mb-4">
                   <h3 className="font-bold mb-2">Overall Kzyno status:</h3>
                   <p className="text-gray-300">
                     Total Liquidity: {(status.total_liquidity / 1e9).toFixed(3)} tokens
@@ -588,48 +610,62 @@ export default function CasinoTest() {
           {/* Liquidity Management Section */}
           <div className="bg-gray-800 p-6 rounded-lg">
             <h2 className={`text-xl font-bold mb-4 ${daydream.className}`}>Liquidity Management</h2>
-            <p className="text-gray-400 mb-4 text-md">
-              Deposit or withdraw liquidity tokens to/from the casino. This SOL is used to provide
-              liquidity to the casino, and they entitle you to a share of kzyno&apos;s profits.
-            </p>
 
-            <div className="mb-4">
-              <label className="block text-gray-300 mb-2">Deposit Amount (SOL):</label>
-              <input
-                type="number"
-                value={depositAmount}
-                onChange={(e) => setDepositAmount(Number(e.target.value))}
-                className="w-full bg-gray-700 text-white p-2 rounded"
-                min="1"
-              />
-            </div>
+            {hasLiquidity ? (
+              <>
+                {/* User has liquidity - show withdraw option and profit stats */}
+                <div className="mb-4">
+                  <h3 className="font-bold mb-2 text-green-400">Your Liquidity Provider Stats:</h3>
+                  <p className="text-gray-300">
+                    Liquidity provided: {(balance.token / 1e9).toFixed(3)} SOL
+                  </p>
+                  {status && (
+                    <p className="text-gray-300">
+                      Your share of profits: {status.profit_share.toFixed(3)} SOL
+                    </p>
+                  )}
+                </div>
 
-            <button
-              onClick={handleDeposit}
-              disabled={loading || !casinoClient}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded disabled:opacity-50 mb-4"
-            >
-              {loading ? 'Processing...' : 'Deposit Liquidity'}
-            </button>
+                <p className="text-gray-400 mb-4 text-md">
+                  Withdraw all your liquidity and accumulated profits from the casino.
+                </p>
 
-            <div className="mb-4">
-              <label className="block text-gray-300 mb-2">Withdraw Amount (SOL):</label>
-              <input
-                type="number"
-                value={withdrawAmount}
-                onChange={(e) => setWithdrawAmount(Number(e.target.value))}
-                className="w-full bg-gray-700 text-white p-2 rounded"
-                min="1"
-              />
-            </div>
+                <button
+                  onClick={handleWithdraw}
+                  disabled={loading || !casinoClient}
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white py-3 rounded font-bold disabled:opacity-50"
+                >
+                  {loading ? 'Processing...' : 'Withdraw All Liquidity + Profits!'}
+                </button>
+              </>
+            ) : (
+              <>
+                {/* User has no liquidity - show deposit option */}
+                <p className="text-gray-400 mb-4 text-md">
+                  Deposit SOL to provide liquidity to the casino. This entitles you to a share of
+                  kzyno&apos;s profits.
+                </p>
 
-            <button
-              onClick={handleWithdraw}
-              disabled={loading || !casinoClient}
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded disabled:opacity-50"
-            >
-              {loading ? 'Processing...' : 'Withdraw Liquidity + Profits!'}
-            </button>
+                <div className="mb-4">
+                  <label className="block text-gray-300 mb-2">Deposit Amount (SOL):</label>
+                  <input
+                    type="number"
+                    value={depositAmount}
+                    onChange={(e) => setDepositAmount(Number(e.target.value))}
+                    className="w-full bg-gray-700 text-white p-2 rounded"
+                    min="1"
+                  />
+                </div>
+
+                <button
+                  onClick={handleDeposit}
+                  disabled={loading || !casinoClient}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white py-3 rounded font-bold disabled:opacity-50"
+                >
+                  {loading ? 'Processing...' : 'Deposit Liquidity'}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

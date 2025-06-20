@@ -42,6 +42,7 @@ export class CasinoClient {
   private adapter: MessageSignerWalletAdapter
   private isAuthenticated: boolean = false
   private cluster: 'devnet' | 'mainnet-beta' | 'localhost'
+  private authPromise: Promise<void> | null = null
 
   constructor(
     connection: Connection,
@@ -82,11 +83,27 @@ export class CasinoClient {
     if (!this.provider.wallet.publicKey || !this.userBalancePda) {
       throw new Error('Wallet not connected')
     }
+    await this.authenticate()
 
     try {
-      const userBalanceAccount = await this.program.account.userBalance.fetch(this.userBalancePda)
-      const sol = Number(userBalanceAccount.balance) / 1e9
-      return Math.round(sol * KOINS_PER_SOL)
+      const response = await fetch('/api/casino/accounts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          operation: 'get_koins',
+          cluster: this.cluster,
+        }),
+        credentials: 'include',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch koins')
+      }
+
+      const result = await response.json()
+      return result.koins
     } catch {
       return 0
     }
@@ -96,37 +113,27 @@ export class CasinoClient {
     if (!this.provider.wallet.publicKey || !this.userLiquidityPda) {
       throw new Error('Wallet not connected')
     }
+    await this.authenticate()
 
     try {
-      // Get SOL balance
-      const solBalance = await this.connection.getBalance(this.provider.wallet.publicKey)
+      const response = await fetch('/api/casino/accounts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          operation: 'get_balance',
+          cluster: this.cluster,
+        }),
+        credentials: 'include',
+      })
 
-      let tokenBalance = 0
-      if (this.userLiquidityPda) {
-        try {
-          const tokenBalanceAccount = await this.program.account.userLiquidity.fetch(
-            this.userLiquidityPda
-          )
-          tokenBalance = Number(tokenBalanceAccount.shares)
-        } catch {
-          console.log('No token balance account found yet')
-        }
+      if (!response.ok) {
+        throw new Error('Failed to get balance')
       }
 
-      // Get casino balance
-      let casinoBalance = 0
-      if (this.userBalancePda) {
-        try {
-          const userBalanceAccount = await this.program.account.userBalance.fetch(
-            this.userBalancePda
-          )
-          casinoBalance = Number(userBalanceAccount.balance)
-        } catch {
-          console.log('No casino balance account found yet')
-        }
-      }
-
-      return { sol: solBalance, token: tokenBalance, casino: casinoBalance }
+      const result = await response.json()
+      return result
     } catch (error) {
       console.error('Error getting balance:', error)
       throw new Error('Failed to get balance')
@@ -142,6 +149,23 @@ export class CasinoClient {
       return
     }
 
+    // If authentication is already in progress, return the existing promise
+    if (this.authPromise) {
+      return this.authPromise
+    }
+
+    // Create new authentication promise
+    this.authPromise = this._performAuthentication()
+
+    try {
+      await this.authPromise
+    } finally {
+      // Clear the promise when done (success or failure)
+      this.authPromise = null
+    }
+  }
+
+  private async _performAuthentication(): Promise<void> {
     if (await isAuthenticated()) {
       this.isAuthenticated = true
       return
@@ -172,11 +196,33 @@ export class CasinoClient {
       if (!response.ok) {
         throw new Error('Authentication failed')
       }
+
+      this.isAuthenticated = true
     } catch (error) {
       console.error('Authentication error:', error)
       throw new Error(
         `Authentication failed: ${error instanceof Error ? error.message : String(error)}`
       )
+    }
+  }
+
+  async logout(): Promise<void> {
+    try {
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      })
+
+      if (!response.ok) {
+        throw new Error('Logout failed')
+      }
+
+      // Reset authentication state
+      this.isAuthenticated = false
+      this.authPromise = null
+    } catch (error) {
+      console.error('Logout error:', error)
+      throw new Error(`Logout failed: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 
@@ -194,16 +240,27 @@ export class CasinoClient {
     try {
       const betLamports = Math.floor((bet / KOINS_PER_SOL) * LAMPORTS_PER_SOL)
 
-      // Calculate max bet size
-      const globalState = await this.program.account.globalState.fetch(this.globalState)
-      const vaultAccount = await this.connection.getAccountInfo(this.vaultPda)
+      // Get play data from backend
+      const playDataResponse = await fetch('/api/casino/accounts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          operation: 'get_play_data',
+          cluster: this.cluster,
+        }),
+        credentials: 'include',
+      })
 
-      if (!vaultAccount) {
-        throw new Error('Vault account not found')
+      if (!playDataResponse.ok) {
+        throw new Error('Failed to get play data')
       }
 
+      const playData = await playDataResponse.json()
+      console.log(playData)
+      const casinoBalance = playData.casino_balance
       const risk = 100 // 1% risk
-      const casinoBalance = vaultAccount.lamports - Number(globalState.userFunds)
       const chanceMinusOne = multiplier - 1
       const maxBetSize = Math.floor(casinoBalance / risk / chanceMinusOne)
 
@@ -245,12 +302,29 @@ export class CasinoClient {
     if (!this.provider.wallet.publicKey) {
       throw new Error('Wallet not connected')
     }
+    await this.authenticate()
 
     try {
       // Convert amount to smallest token unit (assuming 9 decimals like SOL)
       const amountTokens = new BN(Math.floor(amount * 1e9))
 
-      await this.program.methods
+      // Get recent blockhash from backend
+      const blockhashResponse = await fetch('/api/casino/blockhash', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cluster: this.cluster }),
+        credentials: 'include',
+      })
+
+      if (!blockhashResponse.ok) {
+        throw new Error('Failed to get blockhash')
+      }
+
+      const { blockhash } = await blockhashResponse.json()
+
+      const tx = await this.program.methods
         .depositLiquidity(new BN(0), amountTokens)
         .accounts({
           signer: this.provider.wallet.publicKey,
@@ -260,7 +334,27 @@ export class CasinoClient {
           systemProgram: SystemProgram.programId,
           tokenProgram: TOKEN_PROGRAM_ID,
         })
-        .rpc()
+        .transaction()
+
+      // Set the blockhash
+      tx.recentBlockhash = blockhash
+      tx.feePayer = this.provider.wallet.publicKey
+
+      const signedTx = await this.provider.wallet.signTransaction(tx)
+
+      const serializedTx = signedTx.serialize()
+      const response = await fetch('/api/casino/transactions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ serializedTransaction: serializedTx, cluster: this.cluster }),
+        credentials: 'include',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to deposit')
+      }
 
       console.log(`✅ Successfully deposited ${amount} tokens`)
     } catch (error) {
@@ -275,9 +369,26 @@ export class CasinoClient {
     if (!this.provider.wallet.publicKey) {
       throw new Error('Wallet not connected')
     }
+    await this.authenticate()
 
     try {
-      await this.program.methods
+      // Get recent blockhash from backend
+      const blockhashResponse = await fetch('/api/casino/blockhash', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cluster: this.cluster }),
+        credentials: 'include',
+      })
+
+      if (!blockhashResponse.ok) {
+        throw new Error('Failed to get blockhash')
+      }
+
+      const { blockhash } = await blockhashResponse.json()
+
+      const tx = await this.program.methods
         .withdrawLiquidity(new BN(0))
         .accounts({
           signer: this.provider.wallet.publicKey,
@@ -286,7 +397,27 @@ export class CasinoClient {
           globalState: this.globalState,
           systemProgram: SystemProgram.programId,
         })
-        .rpc()
+        .transaction()
+
+      // Set the blockhash
+      tx.recentBlockhash = blockhash
+      tx.feePayer = this.provider.wallet.publicKey
+
+      const signedTx = await this.provider.wallet.signTransaction(tx)
+
+      const serializedTx = signedTx.serialize()
+      const response = await fetch('/api/casino/transactions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ serializedTransaction: serializedTx, cluster: this.cluster }),
+        credentials: 'include',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to withdraw')
+      }
 
       console.log(`✅ Successfully withdrew ${amount} tokens`)
     } catch (error) {
@@ -313,27 +444,26 @@ export class CasinoClient {
     profit: number
     profit_share: number
   }> {
+    await this.authenticate()
     try {
-      console.log('Program ID:', this.program.programId.toString())
-      const globalState = await this.program.account.globalState.fetch(this.globalState)
-      const vaultAccount = await this.connection.getAccountInfo(this.vaultPda)
-      const vaultBalance = vaultAccount ? vaultAccount.lamports : 0
-      const profits = vaultBalance - Number(globalState.deposits) - Number(globalState.userFunds)
+      const response = await fetch('/api/casino/accounts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          operation: 'get_status',
+          cluster: this.cluster,
+        }),
+        credentials: 'include',
+      })
 
-      let profit_share = 0
-      if (this.userLiquidityPda) {
-        const userLiquidityAccount = await this.program.account.userLiquidity.fetch(
-          this.userLiquidityPda
-        )
-        profit_share = this.get_profit_share(userLiquidityAccount, globalState)
+      if (!response.ok) {
+        throw new Error('Failed to get status')
       }
 
-      return {
-        total_liquidity: Number(globalState.totalShares),
-        vault_balance: vaultAccount ? vaultAccount.lamports / LAMPORTS_PER_SOL : 0,
-        profit: profits / LAMPORTS_PER_SOL,
-        profit_share: profit_share / LAMPORTS_PER_SOL,
-      }
+      const result = await response.json()
+      return result
     } catch (error) {
       console.error('Error getting status:', error)
       return {
@@ -349,7 +479,7 @@ export class CasinoClient {
     if (!this.provider.wallet.publicKey) {
       throw new Error('Wallet not connected')
     }
-
+    await this.authenticate()
     try {
       const userBalancePda = PublicKey.findProgramAddressSync(
         [Buffer.from('user_balance'), this.provider.wallet.publicKey.toBuffer()],
@@ -359,7 +489,23 @@ export class CasinoClient {
       // Convert SOL to lamports
       const amountLamports = new BN(Math.floor(amount * LAMPORTS_PER_SOL))
 
-      await this.program.methods
+      // Get recent blockhash from backend
+      const blockhashResponse = await fetch('/api/casino/blockhash', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cluster: this.cluster }),
+        credentials: 'include',
+      })
+
+      if (!blockhashResponse.ok) {
+        throw new Error('Failed to get blockhash')
+      }
+
+      const { blockhash } = await blockhashResponse.json()
+
+      const tx = await this.program.methods
         .depositFunds(amountLamports)
         .accounts({
           signer: this.provider.wallet.publicKey,
@@ -369,7 +515,27 @@ export class CasinoClient {
           vaultAccount: this.vaultPda,
           systemProgram: SystemProgram.programId,
         })
-        .rpc()
+        .transaction()
+
+      // Set the blockhash
+      tx.recentBlockhash = blockhash
+      tx.feePayer = this.provider.wallet.publicKey
+
+      const signedTx = await this.provider.wallet.signTransaction(tx)
+
+      const serializedTx = signedTx.serialize()
+      const response = await fetch('/api/casino/transactions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ serializedTransaction: serializedTx, cluster: this.cluster }),
+        credentials: 'include',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to deposit funds')
+      }
 
       console.log(`✅ Successfully deposited ${amount} SOL to casino balance`)
     } catch (error) {
@@ -384,7 +550,7 @@ export class CasinoClient {
     if (!this.provider.wallet.publicKey) {
       throw new Error('Wallet not connected')
     }
-
+    await this.authenticate()
     try {
       const userBalancePda = PublicKey.findProgramAddressSync(
         [Buffer.from('user_balance'), this.provider.wallet.publicKey.toBuffer()],
@@ -394,7 +560,23 @@ export class CasinoClient {
       // Convert SOL to lamports
       const amountLamports = new BN(Math.floor(amount * LAMPORTS_PER_SOL))
 
-      await this.program.methods
+      // Get recent blockhash from backend
+      const blockhashResponse = await fetch('/api/casino/blockhash', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cluster: this.cluster }),
+        credentials: 'include',
+      })
+
+      if (!blockhashResponse.ok) {
+        throw new Error('Failed to get blockhash')
+      }
+
+      const { blockhash } = await blockhashResponse.json()
+
+      const tx = await this.program.methods
         .withdrawFunds(amountLamports)
         .accounts({
           user: this.provider.wallet.publicKey,
@@ -404,7 +586,27 @@ export class CasinoClient {
           vaultAccount: this.vaultPda,
           systemProgram: SystemProgram.programId,
         })
-        .rpc()
+        .transaction()
+
+      // Set the blockhash
+      tx.recentBlockhash = blockhash
+      tx.feePayer = this.provider.wallet.publicKey
+
+      const signedTx = await this.provider.wallet.signTransaction(tx)
+
+      const serializedTx = signedTx.serialize()
+      const response = await fetch('/api/casino/transactions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ serializedTransaction: serializedTx, cluster: this.cluster }),
+        credentials: 'include',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to withdraw')
+      }
 
       console.log(`✅ Successfully withdrew ${amount} SOL from casino balance`)
     } catch (error) {

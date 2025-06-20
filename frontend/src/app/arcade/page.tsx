@@ -102,7 +102,7 @@ export default function Arcade() {
       <nav className="fixed top-0 right-0 p-4 md:p-6 z-50">
         <div className="flex gap-4">
           <Link
-            href="/"
+            href="/home"
             className={`text-lg md:text-xl text-white hover:text-pink-200 transition-colors drop-shadow-lg ${daydream.className}`}
           >
             Home

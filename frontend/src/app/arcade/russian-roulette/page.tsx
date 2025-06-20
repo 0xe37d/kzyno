@@ -8,10 +8,12 @@ import { useCasino } from '@/contexts/CasinoContext'
 import { CasinoClient } from '@/lib/casino-client'
 import { useAudio } from '@/contexts/SettingsContext'
 import SettingsMenu from '@/components/SettingsMenu'
+import GameSetupModal from '@/components/GameSetupModal'
+import { useGameSetup } from '@/hooks/useGameSetup'
 
 type GameResult = 'survived' | 'dead' | null
 
-interface RouletteResult {
+type RouletteResult = {
   result: GameResult
   won: boolean
 }
@@ -24,6 +26,9 @@ export default function RussianRoulette() {
   const [gameResult, setGameResult] = useState<RouletteResult | null>(null)
   const [currentImage, setCurrentImage] = useState('standing')
   const [showMuzzleFlash, setShowMuzzleFlash] = useState(false)
+
+  // Game setup hook
+  const { isSetupModalOpen, onClose } = useGameSetup()
 
   // Audio hooks using settings
   const spinAudio = useAudio('/audio/spin.mp3', { volume: 0.6, loop: true })
@@ -135,44 +140,22 @@ export default function RussianRoulette() {
     setShowMuzzleFlash(false)
   }
 
-  // Add wallet connection check
-  if (!isConnected) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#1a1a1a]">
-        <h1 className={`text-2xl text-white mb-4 ${daydream.className}`}>
-          <Link
-            href="/arcade/dashboard"
-            className="text-green-200 hover:text-green-300 underline-offset-[14px] underline"
-          >
-            Please connect your wallet to play
-          </Link>
-        </h1>
-      </div>
-    )
-  }
-
-  if (balance === 0) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#1a1a1a]">
-        <h1 className={`text-2xl text-white mb-4 ${daydream.className}`}>
-          Deposit some SOL in the{' '}
-          <Link href="/arcade/dashboard" className="text-red-200 hover:text-red-300">
-            casino
-          </Link>{' '}
-          to play
-        </h1>
-      </div>
-    )
-  }
-
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-black via-red-900/20 to-black relative overflow-hidden">
-      {/* Dark atmospheric background */}
-      <div className="absolute inset-0 bg-[url('/game/dark-texture.jpg')] opacity-10" />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/40 to-transparent" />
+    <div className="min-h-screen flex flex-col bg-[#1a1a1a] relative overflow-hidden">
+      <GameSetupModal isOpen={isSetupModalOpen} onClose={onClose} />
 
-      {/* Flickering light effect */}
-      <div className="absolute inset-0 bg-red-500/5 animate-pulse" />
+      {/* Casino-style decorative elements */}
+      <div className="absolute inset-0 bg-[url('/game/felt.jpg')] opacity-20" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent" />
+
+      {/* Decorative corner elements */}
+      <div className="absolute top-0 left-0 w-32 h-32 bg-red-500/5 rounded-br-full" />
+      <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-bl-full" />
+      <div className="absolute bottom-0 left-0 w-32 h-32 bg-red-500/5 rounded-tr-full" />
+      <div className="absolute bottom-0 right-0 w-32 h-32 bg-red-500/5 rounded-tl-full" />
+
+      {/* Subtle pattern overlay */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_0%,_rgba(0,0,0,0.1)_100%)]" />
 
       {/* Settings Menu */}
       <SettingsMenu />
@@ -181,7 +164,7 @@ export default function RussianRoulette() {
         <div className="flex gap-4">
           <Link
             href="/arcade"
-            className={`text-lg md:text-xl text-white hover:text-red-200 transition-colors ${daydream.className}`}
+            className={`text-lg md:text-xl text-white hover:text-pink-200 transition-colors ${daydream.className}`}
           >
             Back to Arcade
           </Link>

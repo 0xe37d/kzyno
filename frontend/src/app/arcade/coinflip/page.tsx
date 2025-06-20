@@ -7,6 +7,8 @@ import { useCasino } from '@/contexts/CasinoContext'
 import { CasinoClient } from '@/lib/casino-client'
 import { useAudio } from '@/contexts/SettingsContext'
 import SettingsMenu from '@/components/SettingsMenu'
+import GameSetupModal from '@/components/GameSetupModal'
+import { useGameSetup } from '@/hooks/useGameSetup'
 
 type CoinSide = 'heads' | 'tails'
 
@@ -25,7 +27,7 @@ export default function CoinFlip() {
   const [coinRotation, setCoinRotation] = useState(0)
   const [currentSide, setCurrentSide] = useState<CoinSide>('heads')
   const flipIntervalRef = useRef<NodeJS.Timeout | null>(null)
-
+  const { isSetupModalOpen, onClose } = useGameSetup()
   // Audio hooks using settings
   const coinAudio = useAudio('/audio/coin.mp3', { volume: 0.6, loop: true })
   const goodAudio = useAudio('/audio/good.mp3', { volume: 0.8 })
@@ -174,38 +176,10 @@ export default function CoinFlip() {
     }
   }
 
-  // Add wallet connection check
-  if (!isConnected) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#1a472a]">
-        <h1 className={`text-2xl text-white mb-4 ${daydream.className}`}>
-          <Link
-            href="/arcade/dashboard"
-            className="text-green-200 hover:text-green-300 underline-offset-[14px] underline"
-          >
-            Please connect your wallet to play
-          </Link>
-        </h1>
-      </div>
-    )
-  }
-
-  if (balance === 0) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#1a472a]">
-        <h1 className={`text-2xl text-white mb-4 ${daydream.className}`}>
-          Deposit some SOL in the{' '}
-          <Link href="/arcade/dashboard" className="text-pink-200 hover:text-pink-300">
-            casino
-          </Link>{' '}
-          to play
-        </h1>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen flex flex-col bg-[#1a472a] relative overflow-hidden">
+      <GameSetupModal isOpen={isSetupModalOpen} onClose={onClose} />
+
       {/* Casino-style decorative elements */}
       <div
         className="absolute inset-0 bg-[url('/game/felt.jpg')] opacity-20"

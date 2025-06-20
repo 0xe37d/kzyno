@@ -8,6 +8,8 @@ import { useCasino } from '@/contexts/CasinoContext'
 import { CasinoClient } from '@/lib/casino-client'
 import { useAudio } from '@/contexts/SettingsContext'
 import SettingsMenu from '@/components/SettingsMenu'
+import GameSetupModal from '@/components/GameSetupModal'
+import { useGameSetup } from '@/hooks/useGameSetup'
 
 type Suit = 'hearts' | 'diamonds' | 'spades' | 'clubs'
 type Value = '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K' | 'A'
@@ -34,6 +36,7 @@ interface BaccaratResult {
 
 export default function Baccarat() {
   const { casinoClient, isConnected } = useCasino()
+  const { isSetupModalOpen, onClose } = useGameSetup()
   const [balance, setBalance] = useState(0)
   const [betAmount, setBetAmount] = useState(10)
   const [selectedBet, setSelectedBet] = useState<BetType>(null)
@@ -372,38 +375,10 @@ export default function Baccarat() {
     setDealingCard(0)
   }
 
-  // Add wallet connection check
-  if (!isConnected) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0f5132]">
-        <h1 className={`text-2xl text-white mb-4 ${daydream.className}`}>
-          <Link
-            href="/arcade/dashboard"
-            className="text-green-200 hover:text-green-300 underline-offset-[14px] underline"
-          >
-            Please connect your wallet to play
-          </Link>
-        </h1>
-      </div>
-    )
-  }
-
-  if (balance === 0) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0f5132]">
-        <h1 className={`text-2xl text-white mb-4 ${daydream.className}`}>
-          Deposit some SOL in the{' '}
-          <Link href="/arcade/dashboard" className="text-green-200 hover:text-green-300">
-            casino
-          </Link>{' '}
-          to play
-        </h1>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-green-900 via-green-800 to-green-900 relative overflow-hidden">
+      <GameSetupModal isOpen={isSetupModalOpen} onClose={onClose} />
+
       {/* Casino table background */}
       <div className="absolute inset-0 bg-[url('/game/felt.jpg')] opacity-30" />
       <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-transparent" />
