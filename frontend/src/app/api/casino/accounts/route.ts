@@ -2,6 +2,7 @@ import { Connection, PublicKey } from '@solana/web3.js'
 import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify } from 'jose'
 import idl from '@shared/anchor/idl/kzyno.json'
+import { KOINS_PER_SOL } from '@/lib/constants'
 
 const PROGRAM_ID = new PublicKey(idl.address)
 const JWT_SECRET = process.env.JWT_SECRET
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest) {
           // Deserialize the account data manually since we're not using Anchor in the backend
           // This assumes the userBalance account structure from the IDL
           const balance = userBalanceAccount.data.readBigUInt64LE(8) // Skip discriminator
-          const koins = (Number(balance) / 1e9) * 1000 // Convert to koins (1000 koins per SOL)
+          const koins = (Number(balance) / 1e9) * KOINS_PER_SOL // Convert to koins (1000 koins per SOL)
           return NextResponse.json({ koins: Math.round(koins) })
         } catch {
           return NextResponse.json({ koins: 0 })

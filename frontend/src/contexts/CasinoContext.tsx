@@ -25,7 +25,7 @@ export function CasinoProvider({
   cluster: 'devnet' | 'mainnet-beta' | 'localhost'
 }) {
   const wallet = useAnchorWallet()
-  const otherWallet = useWallet()
+  const otherWallet = useWallet() // very dirty, but for some reason we can't sign messages with the anchor wallet, needed for auth
   const [casinoClient, setCasinoClient] = useState<CasinoClient | null>(null)
 
   useEffect(() => {

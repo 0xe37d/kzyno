@@ -114,7 +114,10 @@ export async function POST(request: NextRequest) {
     )
 
     /* 4. build instruction ---------------------------------------------- */
-    const rngSeed = Math.floor(Math.random() * 1e7)
+    const buf = new BigUint64Array(1)
+    crypto.getRandomValues(buf)
+    const rngSeed = Number(buf[0] & ((1n << 53n) - 1n)) // 0 – 9 ,007 ,199 ,254 ,740 ,991
+
     const data = await buildPlayGameData(multiplier, rngSeed, bet)
 
     const keys = [

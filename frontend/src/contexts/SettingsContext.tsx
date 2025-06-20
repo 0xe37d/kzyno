@@ -21,7 +21,7 @@ interface SettingsContextType {
 const defaultSettings: Settings = {
   isMuted: false,
   horseRaceSpeed: 'normal',
-  rpcCluster: 'devnet',
+  rpcCluster: 'mainnet-beta',
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined)

@@ -6,6 +6,7 @@ import { useCasino } from '@/contexts/CasinoContext'
 import { Balance } from '@/lib/casino-client'
 import { KOINS_PER_SOL } from '@/lib/constants'
 import { daydream } from '@/app/fonts'
+import Image from 'next/image'
 import dynamic from 'next/dynamic'
 
 // Dynamically import the WalletMultiButton with SSR disabled
@@ -72,15 +73,9 @@ export default function GameSetupModal({ isOpen, onClose }: GameSetupModalProps)
       setLoading(false)
     }
   }
-
   const handleGetSol = () => {
     if (isDevnet) {
       window.open('https://faucet.solana.com/', '_blank')
-    } else {
-      window.open(
-        'https://crypto.link.com/?ref=lb&source_amount=20&source_currency=usd&destination_currency=sol&destination_network=solana',
-        '_blank'
-      )
     }
   }
 
@@ -88,6 +83,25 @@ export default function GameSetupModal({ isOpen, onClose }: GameSetupModalProps)
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      {/* Red arrow pointing to top right for mainnet when no SOL */}
+      {connected && !hasSol && !isDevnet && (
+        <div className="fixed top-4 right-4 z-60 -translate-x-24">
+          <svg
+            data-name="1-Arrow Up"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 32 32"
+            width="120"
+            height="120"
+            className="text-red-600"
+            fill="currentColor"
+          >
+            <path d="m26.71 10.29-10-10a1 1 0 0 0-1.41 0l-10 10 1.41 1.41L15 3.41V32h2V3.41l8.29 8.29z" />
+          </svg>
+          <div className="text-center mt-2">
+            <p className="text-red-600 font-bold text-lg tracking-wider">It should be here!</p>
+          </div>
+        </div>
+      )}
       <div className="bg-gradient-to-br from-gray-900 to-black border border-purple-500/30 rounded-2xl max-w-md w-full">
         {/* Header */}
         <div className="p-6 border-b border-purple-500/20 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-t-2xl">
@@ -159,18 +173,33 @@ export default function GameSetupModal({ isOpen, onClose }: GameSetupModalProps)
               <h3 className={`text-lg font-bold text-white mb-2 ${daydream.className}`}>
                 Get Some SOL
               </h3>
-              <p className="text-gray-300 text-sm mb-4">
-                You need SOL to play games. Get some from the faucet or buy it.
-              </p>
+              <p className="text-gray-300 text-sm mb-4">You need SOL to play games.</p>
+              {isDevnet ? (
+                <p>Get some from the faucet</p>
+              ) : (
+                <span className="inline-flex items-center">
+                  You can buy some right from the{' '}
+                  <Image
+                    src="/phantom.png"
+                    alt="Phantom"
+                    width={16}
+                    height={16}
+                    className="inline mr-1 ml-1"
+                  />{' '}
+                  Phantom extension
+                </span>
+              )}
               <div className="text-xs text-gray-400 mb-6">
                 <p>Your SOL Balance: {(balance.sol / 1e9).toFixed(3)} SOL</p>
               </div>
-              <button
-                onClick={handleGetSol}
-                className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300"
-              >
-                {isDevnet ? '🚀 Get Free SOL' : '💳 Buy SOL'}
-              </button>
+              {isDevnet && (
+                <button
+                  onClick={handleGetSol}
+                  className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-500 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300"
+                >
+                  🚀 Get Free SOL
+                </button>
+              )}
             </div>
           )}
 
