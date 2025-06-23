@@ -12,7 +12,7 @@ kzyno = "Har3kPZU49yuvD7etW76fMcj3AW83Q1TbRkz1Y9RjCdv"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "devnet"
+cluster = "mainnet"
 wallet = "../../wallets/kzy2HnRf46r9zNvAuxhwoJcZrYVTQtTToZ7RNsHwsA4.json"
 
 [scripts]
