@@ -6,7 +6,6 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { useCasino } from '@/contexts/CasinoContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { KOINS_PER_SOL } from '@/lib/constants';
-import { VaultHistory } from '@/components/casino/VaultHistory';
 
 const WalletMultiButton = dynamic(
   () => import('@solana/wallet-adapter-react-ui').then((m) => m.WalletMultiButton),
@@ -18,27 +17,35 @@ export default function Dashboard() {
   const { casinoClient } = useCasino();
   const { settings } = useSettings();
 
-  const [balances, setBalances] = useState({ sol: 0, token: 0, casino: 0 });
-  const [status,   setStatus]   = useState({ total_liquidity: 0, vault_balance: 0, profit: 0, profit_share: 0 });
+  const [koins,   setKoins]   = useState(0);   // integer Koins
+  const [balances,setBalances]= useState({ sol:0, token:0, casino:0 });
+  const [status,  setStatus]  = useState({
+    total_liquidity:0, vault_balance:0, profit:0, profit_share:0,
+  });
 
+  // local input states for actions
   const [solIn,  setSolIn]  = useState(0.1);
   const [solOut, setSolOut] = useState(0);
   const [lpIn,   setLpIn]   = useState(1);
   const [lpOut,  setLpOut]  = useState(0);
 
   const solFmt   = (l:number)=> (l/1e9).toFixed(4);
-  const koinsFmt = (l:number)=> ((l/1e9)*KOINS_PER_SOL).toFixed(0);
+  const koinsFmt = (k:number)=> k.toLocaleString();
 
+  /* ───────────────────────────────── polling existing APIs ───────────────────────────── */
   useEffect(() => {
     if (!casinoClient || !connected) return;
+
     const refresh = async () => {
-      setBalances(await casinoClient.get_balance());
-      setStatus  (await casinoClient.get_status());
+      setKoins(await casinoClient.get_koins());          // → /accounts get_koins
+      setBalances(await casinoClient.get_balance());     // → /accounts get_balance
+      setStatus  (await casinoClient.get_status());      // → /accounts get_status
     };
     refresh();
-    const id = setInterval(refresh, 5000);
+    const id = setInterval(refresh, 5_000);              // every 5 s
     return () => clearInterval(id);
   }, [casinoClient, connected]);
+  /* ───────────────────────────────────────────────────────────────────────────────────── */
 
   if (!connected) {
     return (
@@ -52,7 +59,7 @@ export default function Dashboard() {
 
   return (
     <main className="max-w-3xl mx-auto py-10 space-y-10">
-      {/* balances */}
+      {/* ─── WALLET & CASINO INFO ─────────────────────────────────────── */}
       <section className="grid grid-cols-2 gap-4 text-sm">
         <div className="p-4 bg-black/40 rounded-lg">
           <h2 className="font-semibold mb-2">Wallet</h2>
@@ -61,15 +68,21 @@ export default function Dashboard() {
         </div>
         <div className="p-4 bg-black/40 rounded-lg">
           <h2 className="font-semibold mb-2">Casino</h2>
-          <div>Koins: {koinsFmt(balances.casino)}</div>
-          <div>Profit Share: {solFmt(status.profit_share)} SOL</div>
+          <div>Koins: {koinsFmt(koins)}</div>
+          <div>Casino Balance (SOL): {solFmt(balances.casino)}</div>
         </div>
       </section>
 
-      {/* chart */}
-      <VaultHistory />
+      {/* ─── PROFIT & LIQUIDITY STATUS ───────────────────────────────── */}
+      <section className="p-4 bg-black/50 rounded-lg text-sm">
+        <h3 className="font-semibold text-lg mb-2">House Stats</h3>
+        <div>Total Liquidity: {status.total_liquidity}</div>
+        <div>Vault Balance:  {status.vault_balance.toFixed(4)} SOL</div>
+        <div>House Profit (all time): {status.profit.toFixed(4)} SOL</div>
+        <div>Your Profit Share: {status.profit_share.toFixed(4)} SOL</div>
+      </section>
 
-      {/* play balance */}
+      {/* ─── PLAY BALANCE ACTIONS ───────────────────────────────────── */}
       <section className="bg-black/50 p-6 rounded-lg space-y-4">
         <h3 className="font-semibold text-lg">Play Balance</h3>
 
@@ -92,11 +105,9 @@ export default function Dashboard() {
         </button>
       </section>
 
-      {/* liquidity provider */}
+      {/* ─── LP ACTIONS ──────────────────────────────────────────────── */}
       <section className="bg-black/50 p-6 rounded-lg space-y-4">
         <h3 className="font-semibold text-lg">Liquidity Provider</h3>
-        <div>Total Liquidity: {status.total_liquidity}</div>
-        <div>Vault Balance: {solFmt(status.vault_balance)} SOL</div>
 
         <label className="block text-xs mt-2">Deposit Tokens</label>
         <input type="number" min="0.1" step="0.1" value={lpIn}
