@@ -39,8 +39,9 @@ export default function Dashboard() {
 
   if (!connected) {
     return (
-      <div className="flex flex-col items-center pt-20 gap-6">
-        <h1 className="text-3xl font-bold text-white">KZYNO</h1>
+      <div className="flex flex-col items-center pt-20 gap-6 min-h-screen bg-[#0d1b2a] text-white pb-20">
+        <h1 className="text-3xl font-bold text-white">KZYNO Dashbaord</h1>
+        <h2 className="text-3xl text-white">Connect your wallet to get started!</h2>
         <WalletMultiButton className="!bg-yellow-500 !text-black" />
       </div>
     );
@@ -55,6 +56,7 @@ export default function Dashboard() {
 
   return (
     <main className="min-h-screen bg-[#0d1b2a] text-white pb-20">
+
       <div className="max-w-4xl mx-auto pt-10 space-y-10">
 
 
