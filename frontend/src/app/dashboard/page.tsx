@@ -57,19 +57,31 @@ export default function Dashboard() {
     <main className="min-h-screen bg-[#0d1b2a] text-white pb-20">
       <div className="max-w-4xl mx-auto pt-10 space-y-10">
 
-        {/* Slider pill */}
-        <div className="flex bg-gray-800 rounded-full w-fit mx-auto p-1">
-          {['lp','koins'].map((p) => (
+
+        {/* ─── slider pill with sliding background ─────────────────────────── */}
+        <div className="relative flex bg-gray-800 rounded-full w-fit mx-auto p-1">
+        {/* sliding highlight */}
+        <div
+            className={`
+            absolute inset-y-0 w-1/2 rounded-full
+            bg-gradient-to-r from-pink-500 to-fuchsia-600
+            transition-transform duration-300
+            ${panel === 'koins' ? 'translate-x-full' : 'translate-x-0'}
+            `}
+        />
+        {(['lp', 'koins'] as const).map((p) => (
             <button
-              key={p}
-              onClick={()=>setPanel(p as 'lp'|'koins')}
-              className={`px-6 py-2 rounded-full transition-all ${
-                panel===p ? 'bg-yellow-500 text-black' : 'text-gray-400'
-              }`}
+            key={p}
+            onClick={() => setPanel(p)}
+            className={`
+                relative z-10 px-6 py-2 rounded-full text-sm font-medium
+                transition-colors duration-300
+                ${panel === p ? 'text-white' : 'text-gray-400'}
+            `}
             >
-              {p==='lp' ? 'LP Shares' : 'Get Koins'}
+            {p === 'lp' ? 'LP Shares' : 'Get Koins'}
             </button>
-          ))}
+        ))}
         </div>
 
         {/* Big horizontal card */}
