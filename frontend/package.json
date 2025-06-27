@@ -29,6 +29,7 @@
     "nodemailer": "^6.9.12",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "recharts": "^3.0.0",
     "three": "^0.174.0",
     "tweetnacl": "^1.0.3"
   },
