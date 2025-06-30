@@ -6,6 +6,8 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import TradeModal from '@/components/casino/TradeModal';
 import { KOINS_PER_SOL } from '@/lib/constants';
+import { daydream } from '@/app/fonts' 
+
 
 const WalletMultiButton = dynamic(
   () => import('@solana/wallet-adapter-react-ui').then((m) => m.WalletMultiButton),
@@ -78,10 +80,8 @@ export default function Dashboard() {
   const koinsPretty = koins.toLocaleString();
 
   return (
-    <main className="min-h-screen bg-[#0d1b2a] text-white pb-20">
-
-      <div className="max-w-4xl mx-auto pt-10 space-y-10">
-
+    <main className="min-h-screen text-white pb-20 bg-gradient-to-br from-[#ff4da8] to-[#ff1493]">
+    <div className="max-w-4xl mx-auto pt-10 space-y-10">
 
         {/* ─── slider pill with sliding background ─────────────────────────── */}
         <div className="relative flex bg-gray-800 rounded-full w-fit mx-auto p-1">
@@ -110,54 +110,57 @@ export default function Dashboard() {
         ))}
         
         </div>
-        <button
-          onClick={refreshData}
-          className="px-4 py-2 text-sm rounded bg-gray-700 hover:bg-gray-600 disabled:opacity-40"
-          disabled={loading}
-        >
-          {loading ? 'Refreshing…' : 'Refresh'}
-        </button>
+      {/* animated title */}
+      <AnimatedTitle word={panel === 'lp' ? 'LIQUIDITY' : 'KOINS'} />
 
+      {/* refresh button */}
+      <button
+        onClick={refreshData}
+        className="px-4 py-2 text-sm rounded bg-gray-700 hover:bg-gray-600 disabled:opacity-40"
+        disabled={loading}
+      >
+        {loading ? 'Refreshing…' : 'Refresh'}
+      </button>
 
-        {/* Big horizontal card */}
-        {panel === 'lp' ? (
-          <BigCard
-            title="Your LP Position"
-            main={`${lpValueSOL.toFixed(4)} SOL`}
-            sub={`${balances.token} shares • ${sharePriceSOL.toFixed(6)} SOL/share`}
-            onDeposit={()=>setModal({kind:'lp',action:'deposit'})}
-            onWithdraw={()=>setModal({kind:'lp',action:'withdraw'})}
-          />
-        ) : (
-          <BigCard
-            title="Koins Balance"
-            main={koinsPretty + ' Koins'}
-            sub={`${koinsToSol.toFixed(4)} SOL ≈ ${(koinsToSol*KOINS_PER_SOL).toFixed(0)} Koins`}
-            onDeposit={()=>setModal({kind:'koins',action:'deposit'})}
-            onWithdraw={()=>setModal({kind:'koins',action:'withdraw'})}
-          />
-        )}
-
-        {/* Small stats grid */}
-        <section className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          <Stat label="Wallet SOL" value={(balances.sol/1e9).toFixed(4)} />
-          <Stat label="Vault Balance" value={status.vault_balance.toFixed(4)} />
-          <Stat label="House Profit" value={status.profit.toFixed(4)} />
-          <Stat label="Your Profit Share" value={status.profit_share.toFixed(4)} />
-        </section>
-      </div>
-
-      {/* modal layer */}
-      {modal && (
-        <TradeModal
-          open
-          kind={modal.kind}
-          action={modal.action}
-          onClose={()=>setModal(null)}
+      {/* Big horizontal card */}
+      {panel === 'lp' ? (
+        <BigCard
+          title="Your LP Position"
+          main={`${lpValueSOL.toFixed(4)} SOL`}
+          sub={`${balances.token} shares • ${sharePriceSOL.toFixed(6)} SOL/share`}
+          onDeposit={() => setModal({ kind: 'lp', action: 'deposit' })}
+          onWithdraw={() => setModal({ kind: 'lp', action: 'withdraw' })}
+        />
+      ) : (
+        <BigCard
+          title="Koins Balance"
+          main={`${koins.toLocaleString()} Koins`}
+          sub={`${koinsToSol.toFixed(4)} SOL ≈ ${(koinsToSol * KOINS_PER_SOL).toFixed(0)} Koins`}
+          onDeposit={() => setModal({ kind: 'koins', action: 'deposit' })}
+          onWithdraw={() => setModal({ kind: 'koins', action: 'withdraw' })}
         />
       )}
-    </main>
-  );
+
+      {/* Small stats grid */}
+      <section className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+        <Stat label="Wallet SOL" value={(balances.sol / 1e9).toFixed(4)} />
+        <Stat label="Vault Balance" value={status.vault_balance.toFixed(4)} />
+        <Stat label="House Profit" value={status.profit.toFixed(4)} />
+        <Stat label="Your Profit Share" value={status.profit_share.toFixed(4)} />
+      </section>
+    </div>
+
+    {/* modal layer */}
+    {modal && (
+      <TradeModal
+        open
+        kind={modal.kind}
+        action={modal.action}
+        onClose={() => setModal(null)}
+      />
+    )}
+  </main>
+);
 }
 
 /* helpers */
@@ -189,3 +192,29 @@ function Stat({ label, value }: {label:string; value:string|number}) {
     </div>
   );
 }
+
+function AnimatedTitle({ word }: { word: string }) {
+  const letters = [...word.toUpperCase()];
+
+  return (
+    /* key forces React to remount → animation restarts whenever “word” changes */
+    <div key={word} className="slot-machine mx-auto">
+      {/* flex-helpers added so the letters sit dead-centre inside the window */}
+      <div className="slot-window flex justify-center items-center">
+        {letters.map((char, i) => (
+          <div key={`${word}-${i}`} className="slot-reel">
+            <div
+              className={`slot-letter slot-letter-${(i % 6) + 1} text-4xl md:text-8xl ${daydream.className}`}
+            >
+              {char}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="slot-handle" />
+    </div>
+  );
+}
+
+
+
