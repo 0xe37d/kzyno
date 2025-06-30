@@ -4,7 +4,7 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { WalletProvider } from './providers/WalletProvider'
 import { SettingsProvider } from '@/contexts/SettingsContext'
-
+import Header from '@/components/Header';
 export const metadata: Metadata = {
   title: 'kzyno',
   description: 'The future of decentralized casino gaming',
@@ -43,6 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={`${hyperlegible.className} antialiased`}>
+        
         <SettingsProvider>
           <WalletProvider>{children}</WalletProvider>
         </SettingsProvider>

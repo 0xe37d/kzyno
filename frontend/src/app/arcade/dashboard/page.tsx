@@ -22,20 +22,43 @@ export default function Dashboard() {
     total_liquidity:0, vault_balance:0, profit:0, profit_share:0,
   });
   const [koins, setKoins] = useState(0);
-  const [modal, setModal] = useState<{kind:'lp'|'koins'; action:'deposit'|'withdraw'}|null>(null);
+  const [modal,   setModal]   = useState<{kind:'lp'|'koins'; action:'deposit'|'withdraw'}|null>(null);
+  const [loading, setLoading] = useState(false);
 
-  /* pull data every 5 s */
+  // single fetch – runs on mount / when wallet or client changes
   useEffect(() => {
-    if (!casinoClient || !connected) return;
-    const refresh = async () => {
-      setBalances(await casinoClient.get_balance());
-      setStatus  (await casinoClient.get_status());
-      setKoins   (await casinoClient.get_koins());
-    };
-    refresh();
-    const id = setInterval(refresh, 5_000);
-    return () => clearInterval(id);
+      if (!casinoClient || !connected) return;
+      refreshData();
   }, [casinoClient, connected]);
+  const refreshData = async () => {
+    if (!casinoClient) return;
+    setLoading(true);
+  
+    try {
+      /* 1️⃣ authenticate (shows Phantom once if needed) */
+      await casinoClient.authenticate();
+  
+      /* 2️⃣ FIRST call – get_balance
+            this one sets the auth_token cookie */
+      const bal = await casinoClient.get_balance();
+  
+      /* 3️⃣ SECOND + THIRD can now run in parallel */
+      const [stat, k] = await Promise.all([
+        casinoClient.get_status(),
+        casinoClient.get_koins(),
+      ]);
+  
+      /* 4️⃣ update state */
+      setBalances(bal);
+      setStatus(stat);
+      setKoins(k);
+    } catch (e) {
+      console.error('Refresh error:', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
 
   if (!connected) {
     return (
@@ -83,8 +106,18 @@ export default function Dashboard() {
             >
             {p === 'lp' ? 'LP Shares' : 'Get Koins'}
             </button>
+            
         ))}
+        
         </div>
+        <button
+          onClick={refreshData}
+          className="px-4 py-2 text-sm rounded bg-gray-700 hover:bg-gray-600 disabled:opacity-40"
+          disabled={loading}
+        >
+          {loading ? 'Refreshing…' : 'Refresh'}
+        </button>
+
 
         {/* Big horizontal card */}
         {panel === 'lp' ? (
