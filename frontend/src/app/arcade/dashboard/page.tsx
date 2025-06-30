@@ -35,20 +35,20 @@ export default function Dashboard() {
     setLoading(true);
   
     try {
-      /* 1️⃣ authenticate (shows Phantom once if needed) */
+      /* authenticate (shows Phantom once if needed) */
       await casinoClient.authenticate();
   
-      /* 2️⃣ FIRST call – get_balance
+      /* FIRST call – get_balance
             this one sets the auth_token cookie */
       const bal = await casinoClient.get_balance();
   
-      /* 3️⃣ SECOND + THIRD can now run in parallel */
+      /* SECOND + THIRD can now run in parallel */
       const [stat, k] = await Promise.all([
         casinoClient.get_status(),
         casinoClient.get_koins(),
       ]);
   
-      /* 4️⃣ update state */
+      /* update state */
       setBalances(bal);
       setStatus(stat);
       setKoins(k);
