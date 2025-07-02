@@ -100,12 +100,32 @@ export default function Arcade() {
       </div>
 
       <nav className="fixed top-0 right-0 p-4 md:p-6 z-50">
-        <div className="flex gap-4">
+        {/*  flex-row + gap keeps them horizontal  */}
+        <div className="flex flex-row items-center gap-4">
+          {/* ─── Home ─────────────────────────────────────── */}
           <Link
             href="/home"
             className={`text-lg md:text-xl text-white hover:text-pink-200 transition-colors drop-shadow-lg ${daydream.className}`}
           >
             Home
+          </Link>
+
+          {/* ─── Dashboard ───────────────────────────────── */}
+          <Link
+            href="/arcade/dashboard"
+            className={`
+              text-lg md:text-xl text-white ${daydream.className}   /* ← added */
+              px-4 md:px-6 py-2 md:py-2  
+              bg-gradient-to-r from-[#4ade80] to-[#16a34a]
+              hover:from-[#16a34a] hover:to-[#4ade80]
+              transition-all duration-300 ease-in-out
+              rounded-lg border-2 border-white/40
+              shadow-[0_0_40px_rgba(34,197,94,0.8)]
+              hover:shadow-[0_0_60px_rgba(34,197,94,1)]
+              font-black tracking-wide flex items-center gap-2
+            `}
+          >
+            Dashboard
           </Link>
         </div>
       </nav>
