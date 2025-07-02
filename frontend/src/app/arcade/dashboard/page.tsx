@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic';
 import TradeModal from '@/components/casino/TradeModal';
 import { KOINS_PER_SOL } from '@/lib/constants';
 import { daydream } from '@/app/fonts' 
-
+import Link from 'next/link';
 
 const WalletMultiButton = dynamic(
   () => import('@solana/wallet-adapter-react-ui').then((m) => m.WalletMultiButton),
@@ -82,9 +82,18 @@ export default function Dashboard() {
   return (
     <main className="min-h-screen text-white pb-20 bg-gradient-to-br from-[#ff4da8] to-[#ff1493]">
     <div className="max-w-4xl mx-auto pt-10 space-y-10">
-
+      <nav className="fixed top-0 right-0 p-4 md:p-6 z-50">
+        <div className="flex gap-4">
+          <Link
+            href="/arcade"
+            className={`text-lg md:text-xl text-white hover:text-pink-200 transition-colors drop-shadow-lg ${daydream.className}`}
+          >
+            ARCADE
+          </Link>
+        </div>
+      </nav>
         {/* ─── slider pill with sliding background ─────────────────────────── */}
-        <div className="relative flex bg-gray-800 rounded-full w-fit mx-auto p-1">
+      <div className="relative flex bg-gray-800 rounded-full w-fit mx-auto p-1">
         {/* sliding highlight */}
         <div
             className={`
