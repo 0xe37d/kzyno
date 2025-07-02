@@ -150,6 +150,7 @@ export default function Dashboard() {
         />
       )}
 
+
       {/* Small stats grid */}
       <section className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
         <Stat label="Wallet SOL" value={(balances.sol / 1e9).toFixed(4)} />
@@ -157,6 +158,10 @@ export default function Dashboard() {
         <Stat label="House Profit" value={status.profit.toFixed(4)} />
         <Stat label="Your Profit Share" value={status.profit_share.toFixed(4)} />
       </section>
+
+      {/* NEW — quick explainer */}
+      {panel === 'lp' ? <LpInfoCard /> : <KoinsInfoCard />}
+
     </div>
 
     {/* modal layer */}
@@ -222,6 +227,60 @@ function AnimatedTitle({ word }: { word: string }) {
       </div>
       <div className="slot-handle" />
     </div>
+  );
+}
+
+/* ──────────────────────────────────────────────────────────────── */
+/* Simple explainer cards                                           */
+/* ──────────────────────────────────────────────────────────────── */
+
+function LpInfoCard() {
+  return (
+    <section className="max-w-sm mx-auto md:max-w-none bg-[#2a0a1f] p-4 md:p-6 rounded-xl md:rounded-2xl border-2 border-[#ff69b4] shadow-[0_0_30px_rgba(255,20,147,0.3)]">
+      <h2 className={`text-xl md:text-2xl text-white mb-3 md:mb-4 ${daydream.className}`}>
+        <span className="text-2xl md:text-3xl leading-none inline-block">🏦</span>{' '}
+        Liquidity Pool <span className="text-[#ff69b4]">101</span>{' '}
+      </h2>
+      <ul className="list-disc pl-5 space-y-2 text-pink-100">
+        <li>
+          <strong>LP Shares</strong> represent your slice of KZYNO’s liquidity pool
+          (the SOL the house uses to pay winners).
+        </li>
+        <li>
+          As the vault grows, each share is worth more SOL – you earn a cut of the
+          house profit.
+        </li>
+        <li>
+          **LP Shares cannot be used to play games.** They just sit in the pool and
+          accrue value.
+        </li>
+      </ul>
+    </section>
+  );
+}
+
+function KoinsInfoCard() {
+  return (
+    <section className="max-w-sm mx-auto md:max-w-none bg-[#2a0a1f] p-4 md:p-6 rounded-xl md:rounded-2xl border-2 border-[#ff69b4] shadow-[0_0_30px_rgba(255,20,147,0.3)]">
+      <h2 className={`text-xl md:text-2xl text-white mb-3 md:mb-4 ${daydream.className}`}>
+      <span className="text-2xl md:text-3xl leading-none inline-block">🤑</span>{' '}
+        Koins <span className="text-[#ff69b4]">101</span>
+      </h2>
+      <ul className="list-disc pl-5 space-y-2 text-pink-100">
+        <li>
+          <strong>Koins</strong> are the in-game chips. They’re the **only** currency
+          the arcade accepts for bets.
+        </li>
+        <li>
+          Click <em>Deposit</em> → your wallet pops a signature request (no memo, just a
+          tiny fee). Confirm and the SOL you send is instantly credited as Koins.
+        </li>
+        <li>
+          Withdraw at any time: Koins convert back to SOL and the funds return to
+          your wallet.
+        </li>
+      </ul>
+    </section>
   );
 }
 
