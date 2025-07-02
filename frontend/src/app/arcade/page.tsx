@@ -114,8 +114,8 @@ export default function Arcade() {
           <Link
             href="/arcade/dashboard"
             className={`
-              text-lg md:text-xl text-white
-              px-6 md:px-8 py-3 md:py-4
+              text-lg md:text-xl text-white ${daydream.className}   /* ← added */
+              px-4 md:px-6 py-2 md:py-2  
               bg-gradient-to-r from-[#4ade80] to-[#16a34a]
               hover:from-[#16a34a] hover:to-[#4ade80]
               transition-all duration-300 ease-in-out
@@ -125,7 +125,7 @@ export default function Arcade() {
               font-black tracking-wide flex items-center gap-2
             `}
           >
-            🏦 Dashboard
+            Dashboard
           </Link>
         </div>
       </nav>
